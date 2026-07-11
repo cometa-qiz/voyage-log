@@ -70,7 +70,7 @@
 - [x] `normalize.ts`: `normalizeVoyage()`（欠損フィールドの補完・schemaVersion管理）を実装する
 
 ### Firestoreフック（`src/hooks/`）
-- [ ] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
+- [x] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
 - [ ] `useTreasures`: `users/{uid}/treasures` の購読と**追記のみ**の関数を実装する
 - [ ] ローカル設定（`activeId` / `view` / `muted` / `dockOpen`）をlocalStorageで管理するフックを実装する（Firestoreに保存しない）
 
