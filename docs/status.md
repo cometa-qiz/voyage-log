@@ -28,9 +28,9 @@
 - [x] `.env.example` を作成する（`NEXT_PUBLIC_FIREBASE_*` 6項目）
 
 ### ✅ 完了確認
-- [ ] `pnpm dev` で初期画面が表示される
-- [ ] `pnpm build` が成功し `out/` が生成される
-- [ ] **Phase 0での変更**がmain以外のブランチ→PR経由でmainに入っている
+- [x] `pnpm dev` で初期画面が表示される
+- [x] `pnpm build` が成功し `out/` が生成される
+- [x] **Phase 0での変更**がmain以外のブランチ→PR経由でmainに入っている
   （リポジトリ初期化時の最初のコミット・プッシュのみ、quickstart.md STEP 3-2の手順による例外としてmain直接でよい）
 
 ---
