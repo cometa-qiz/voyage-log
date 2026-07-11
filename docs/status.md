@@ -72,7 +72,7 @@
 ### Firestoreフック（`src/hooks/`）
 - [x] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
 - [x] `useTreasures`: `users/{uid}/treasures` の購読と**追記のみ**の関数を実装する
-- [ ] ローカル設定（`activeId` / `view` / `muted` / `dockOpen`）をlocalStorageで管理するフックを実装する（Firestoreに保存しない）
+- [x] ローカル設定（`activeId` / `view` / `muted` / `dockOpen`）をlocalStorageで管理するフックを実装する（Firestoreに保存しない）
 
 ### ✅ 完了確認
 - [ ] 開発用の仮ページから航路を作成→Firestoreコンソールに反映→`onSnapshot`で画面に反映される
