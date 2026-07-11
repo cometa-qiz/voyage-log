@@ -43,7 +43,7 @@
 - [x] 新しいFirebaseプロジェクトを作成する（Yggd-memo・ハビットトラッカーとは別）
 - [x] Authentication（Google Sign-in）を有効化する
 - [x] Firestoreを有効化する（本番モード）
-- [ ] `firestore.rules` を `docs/requirements.md` セクション6の定義通りに作成しデプロイする
+- [x] `firestore.rules` を `docs/requirements.md` セクション6の定義通りに作成しデプロイする
 - [x] `.env.local` にFirebase設定値を記入する（コミットしない）
 
 ### 実装
