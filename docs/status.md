@@ -49,7 +49,7 @@
 ### 実装
 - [x] `src/lib/firebase.ts` を実装する（初期化・auth/dbのエクスポート）
 - [x] `src/app/login/page.tsx` を実装する（Googleサインインボタン）
-- [ ] `AuthGuard.tsx`（Client Component）を実装し `layout.tsx` から呼び出す（`/login` はリダイレクト対象から除外）
+- [x] `AuthGuard.tsx`（Client Component）を実装し `layout.tsx` から呼び出す（`/login` はリダイレクト対象から除外）
 - [ ] サインアウト処理を実装する（ヘッダーから呼べる）
 
 ### ✅ 完了確認
