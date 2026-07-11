@@ -1,0 +1,1748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0F1E2C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>作業の航海日誌</title>
+<style>
+:root{
+  --navy-deep:#0F1E2C;
+  --navy:#17293A;
+  --navy-light:#22384E;
+  --chart-paper:#F4EFE2;
+  --ink:#2E3B45;
+  --magenta:#C2418C;
+  --magenta-soft:#D77BB2;
+  --gold:#C9A85C;
+  --teal:#3E8E8B;
+  --text:#E8E3D5;
+  --text-dim:#9BA8B0;
+  --danger:#C25B41;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+button,.tab,.nb-item,.todo-dock,.t-cell,.arch-todo{touch-action:manipulation;}
+html,body{height:100%;}
+body{
+  background:var(--navy-deep);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -10%, rgba(60,90,120,.25), transparent),
+    repeating-linear-gradient(0deg, transparent 0 3px, rgba(255,255,255,.008) 3px 4px);
+  color:var(--text);
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;
+  line-height:1.6;
+  min-height:100%;
+}
+.app{max-width:1060px;margin:0 auto;padding:20px 16px 60px;}
+
+/* ---------- Header ---------- */
+header{
+  display:flex;align-items:baseline;justify-content:space-between;
+  flex-wrap:wrap;gap:8px;
+  border-bottom:1px solid rgba(201,168,92,.35);
+  padding-bottom:14px;margin-bottom:16px;
+}
+.title-block{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+h1{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:26px;letter-spacing:.35em;font-weight:600;color:var(--text);
+}
+.subtitle{font-size:11px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;}
+.header-actions{display:flex;gap:8px;}
+.btn-ghost{
+  background:transparent;border:1px solid rgba(155,168,176,.35);color:var(--text-dim);
+  font-size:12px;padding:5px 12px;border-radius:6px;cursor:pointer;transition:.2s;
+}
+.btn-ghost:hover{border-color:var(--gold);color:var(--gold);}
+
+/* ---------- Tabs ---------- */
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:10px;margin-bottom:14px;scrollbar-width:thin;-webkit-overflow-scrolling:touch;}
+.tab{
+  flex:0 0 auto;display:flex;align-items:center;gap:8px;
+  background:var(--navy);border:1px solid rgba(155,168,176,.2);
+  border-radius:999px;padding:7px 16px;cursor:pointer;transition:.2s;
+  font-size:13px;color:var(--text-dim);white-space:nowrap;
+}
+.tab:hover{border-color:rgba(201,168,92,.5);}
+.tab.active{
+  background:var(--navy-light);border-color:var(--gold);color:var(--text);
+  box-shadow:0 0 0 1px rgba(201,168,92,.25);
+}
+.tab .pct{font-family:Consolas,monospace;font-size:11px;color:var(--magenta-soft);}
+.tab .sailing-dot{width:7px;height:7px;border-radius:50%;background:#6FCF97;
+  animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+.tab-new{border-style:dashed;color:var(--gold);}
+.tab-treasure{border-color:rgba(201,168,92,.5);color:var(--gold);}
+.tab-treasure.active{background:linear-gradient(160deg,#3A2F16,#2A2314);}
+
+/* ---------- Chart panel ---------- */
+.chart-panel{
+  background:var(--navy);
+  border:1px solid rgba(201,168,92,.3);
+  border-radius:var(--radius);
+  padding:14px;
+  box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+.chart-frame{
+  position:relative;border-radius:6px;overflow:hidden;
+  border:1px solid rgba(46,59,69,.5);
+}
+.chart-frame svg{display:block;width:100%;height:auto;}
+.chart-bg{transition:filter 1.5s ease;}
+
+/* ---- weather (random) ---- */
+.wx-sunny  .chart-bg{filter:saturate(1.05) brightness(1.02);}
+.wx-cloudy .chart-bg{filter:saturate(.55) brightness(.9);}
+.wx-storm  .chart-bg{filter:saturate(.45) brightness(.72) hue-rotate(-12deg);}
+.rain{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s;}
+.wx-storm .rain{opacity:.5;}
+.rain::before{
+  content:"";position:absolute;inset:-60px;
+  background-image:repeating-linear-gradient(105deg,
+    transparent 0 6px, rgba(210,230,245,.5) 6px 7px, transparent 7px 14px);
+  animation:rainfall .5s linear infinite;
+}
+@keyframes rainfall{to{transform:translate(-28px,56px);}}
+.flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;}
+.wx-storm .flash{animation:lightning 7s infinite;}
+@keyframes lightning{
+  0%,93%,100%{opacity:0;}
+  94%{opacity:.35;} 95%{opacity:0;} 96.5%{opacity:.22;} 97.5%{opacity:0;}
+}
+.clouds{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1s;overflow:hidden;}
+.wx-cloudy .clouds,.wx-storm .clouds{opacity:1;}
+.cloud{
+  position:absolute;background:rgba(190,200,210,.35);border-radius:999px;
+  filter:blur(14px);animation:drift linear infinite;
+}
+.wx-storm .cloud{background:rgba(90,100,115,.5);}
+@keyframes drift{from{transform:translateX(-30%);}to{transform:translateX(130%);}}
+.glints{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 1.2s;
+  background:radial-gradient(ellipse 40% 25% at 70% 20%, rgba(255,246,214,.35), transparent 70%);}
+.wx-sunny.tod-noon .glints,.wx-sunny.tod-morning .glints{opacity:1;}
+
+/* ---- time of day ---- */
+.tod-tint{position:absolute;inset:0;pointer-events:none;transition:background 2s ease;}
+.tod-morning .tod-tint{background:linear-gradient(180deg,rgba(255,205,150,.20),rgba(255,175,130,.10));}
+.tod-noon    .tod-tint{background:transparent;}
+.tod-evening .tod-tint{background:linear-gradient(180deg,rgba(255,135,70,.30),rgba(170,70,120,.24));}
+.tod-night   .tod-tint{background:rgba(18,36,78,.48);}
+.tod-midnight .tod-tint{background:rgba(8,16,44,.62);}
+.stars{position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity 2s;
+  background-image:
+    radial-gradient(1.5px 1.5px at 12% 18%, #FFF 40%, transparent 60%),
+    radial-gradient(1px 1px at 28% 8%,  #FFF 40%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 45% 22%, #FFF 40%, transparent 60%),
+    radial-gradient(1px 1px at 60% 10%, #FFF 40%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 76% 16%, #FFF 40%, transparent 60%),
+    radial-gradient(1px 1px at 88% 6%,  #FFF 40%, transparent 60%),
+    radial-gradient(1px 1px at 35% 33%, #FFF 40%, transparent 60%),
+    radial-gradient(1px 1px at 68% 28%, #FFF 40%, transparent 60%);
+}
+.tod-night .stars{opacity:.5;}
+.tod-midnight .stars{opacity:.9;}
+
+.wx-badge{
+  position:absolute;top:10px;left:10px;
+  background:rgba(15,30,44,.75);backdrop-filter:blur(3px);
+  border:1px solid rgba(201,168,92,.35);border-radius:6px;
+  padding:4px 10px;font-size:12px;color:var(--text);display:flex;gap:8px;align-items:center;z-index:6;
+}
+.sail-badges{position:absolute;top:10px;right:10px;display:flex;flex-direction:column;gap:6px;align-items:flex-end;z-index:6;}
+.sail-badge,.pomo-badge{
+  background:rgba(15,30,44,.75);backdrop-filter:blur(3px);
+  border-radius:6px;padding:4px 12px;font-size:12px;
+  font-family:Consolas,monospace;display:none;align-items:center;gap:7px;
+}
+.sail-badge{border:1px solid rgba(111,207,151,.5);color:#9FE8BE;}
+.pomo-badge{border:1px solid rgba(226,110,110,.55);color:#F2B8B8;}
+.pomo-badge.break{border-color:rgba(120,190,230,.55);color:#B8DDF2;}
+.sail-badge .sailing-dot{width:7px;height:7px;border-radius:50%;background:#6FCF97;
+  animation:pulse 1.6s ease-in-out infinite;}
+.is-sailing .sail-badge{display:flex;}
+.is-pomo .pomo-badge{display:flex;}
+
+/* Todoドック（画面左端・クリックで出し入れ） */
+.todo-dock{
+  position:fixed;left:0;top:50%;transform:translateY(-50%);z-index:39;
+  display:flex;align-items:stretch;cursor:pointer;
+  transition:transform .35s cubic-bezier(.3,1,.4,1);
+  user-select:none;
+}
+.todo-dock.closed{transform:translateY(-50%) translateX(calc(30px - 100%));}
+.td-panel{
+  background:rgba(23,41,58,.94);backdrop-filter:blur(4px);
+  border:1px solid rgba(201,168,92,.5);border-left:none;
+  padding:14px 16px;width:min(230px,60vw);
+  box-shadow:6px 0 24px rgba(0,0,0,.35);
+}
+.td-title{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:12px;letter-spacing:.28em;color:var(--gold);
+  margin-bottom:8px;padding-bottom:6px;
+  border-bottom:1px dashed rgba(201,168,92,.35);
+}
+.td-item{
+  font-size:12.5px;color:var(--gold);line-height:1.7;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.td-more{font-size:11px;color:var(--text-dim);margin-top:2px;}
+.td-done-all{font-size:12px;color:var(--text-dim);}
+.td-tab{
+  writing-mode:vertical-rl;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  width:30px;padding:14px 0;
+  background:linear-gradient(180deg,#A8863C,var(--gold));
+  color:#1A1408;font-size:12px;font-weight:700;letter-spacing:.22em;
+  border-radius:0 10px 10px 0;
+  border:1px solid rgba(201,168,92,.6);border-left:none;
+  box-shadow:4px 0 14px rgba(0,0,0,.3);
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+}
+
+/* 島民の応援 */
+.islander{
+  position:absolute;transform:translate(-50%,-115%);
+  background:#FFFDF4;color:#2E3B45;
+  border:2px solid var(--magenta);border-radius:12px;
+  padding:8px 14px;font-size:13px;max-width:230px;
+  box-shadow:0 6px 18px rgba(0,0,0,.3);
+  animation:bubblein .4s cubic-bezier(.3,1.5,.5,1);
+  pointer-events:none;z-index:7;
+}
+.islander::after{
+  content:"";position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);
+  border:9px solid transparent;border-top-color:var(--magenta);border-bottom:none;
+}
+.islander .who{display:block;font-size:10px;color:var(--magenta);font-weight:700;letter-spacing:.1em;}
+.islander.fadeout{animation:bubbleout .6s forwards;}
+@keyframes bubblein{from{transform:translate(-50%,-115%) scale(.5);opacity:0;}}
+@keyframes bubbleout{to{opacity:0;transform:translate(-50%,-135%);}}
+
+/* ---------- Stats ---------- */
+.stats{
+  display:grid;grid-template-columns:auto 1fr auto auto;gap:16px;align-items:center;
+  margin-top:14px;
+}
+.pct-big{
+  font-family:Consolas,monospace;font-size:34px;font-weight:700;color:var(--gold);
+  line-height:1;letter-spacing:-.02em;
+}
+.pct-big small{font-size:16px;color:var(--text-dim);font-weight:400;}
+.progress-track{
+  height:8px;background:rgba(155,168,176,.15);border-radius:99px;overflow:hidden;min-width:120px;
+}
+.progress-fill{
+  height:100%;border-radius:99px;
+  background:linear-gradient(90deg,var(--magenta),var(--gold));
+  transition:width .9s linear;
+}
+.stat{font-size:12px;color:var(--text-dim);text-align:right;white-space:nowrap;}
+.stat b{display:block;font-size:15px;color:var(--text);font-family:Consolas,monospace;font-weight:600;}
+
+/* ---------- Buttons ---------- */
+.log-row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap;}
+.btn-primary{
+  flex:2;min-width:180px;
+  background:linear-gradient(160deg,#8E2F66,var(--magenta));
+  border:none;border-radius:var(--radius);color:#FFF;
+  font-size:16px;font-weight:600;letter-spacing:.15em;padding:14px 20px;cursor:pointer;
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  box-shadow:0 4px 16px rgba(194,65,140,.3);transition:.2s;
+}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(194,65,140,.42);}
+.btn-primary.anchored{
+  background:linear-gradient(160deg,#2C6B68,var(--teal));
+  box-shadow:0 4px 16px rgba(62,142,139,.3);
+}
+.btn-note,.btn-pomo{
+  flex:1;min-width:120px;
+  background:var(--navy-light);border:1px solid rgba(201,168,92,.4);color:var(--gold);
+  border-radius:var(--radius);padding:14px 14px;font-size:14px;cursor:pointer;transition:.2s;
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;letter-spacing:.08em;
+}
+.btn-note:hover,.btn-pomo:hover{border-color:var(--gold);background:rgba(201,168,92,.1);}
+.btn-pomo.on{
+  background:linear-gradient(160deg,#7E2B2B,#B34A4A);color:#FFE8E8;border-color:#C96B6B;
+}
+.btn-secondary{
+  background:var(--navy-light);border:1px solid rgba(155,168,176,.3);color:var(--text-dim);
+  border-radius:var(--radius);padding:14px 18px;font-size:13px;cursor:pointer;transition:.2s;
+}
+.btn-secondary:hover{border-color:var(--danger);color:#E2A090;}
+
+/* ---------- Notebook ---------- */
+.notebook-btn{
+  position:fixed;right:18px;bottom:calc(18px + env(safe-area-inset-bottom,0px));z-index:40;
+  width:60px;height:60px;border-radius:50%;
+  background:linear-gradient(160deg,#A8863C,var(--gold));
+  border:none;font-size:26px;cursor:pointer;
+  box-shadow:0 6px 20px rgba(201,168,92,.4);transition:.2s;
+}
+.notebook-btn:hover{transform:translateY(-2px) rotate(-4deg);}
+.nb-count{
+  position:absolute;top:-4px;right:-4px;
+  background:var(--magenta);color:#FFF;font-size:11px;font-weight:700;
+  min-width:22px;height:22px;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:Consolas,monospace;border:2px solid var(--navy-deep);
+}
+.notebook{
+  position:fixed;top:0;right:0;bottom:0;z-index:45;
+  width:min(360px,92vw);
+  background:linear-gradient(180deg,#2A2318,#241E14);
+  border-left:3px solid var(--gold);
+  box-shadow:-12px 0 40px rgba(0,0,0,.5);
+  transform:translateX(105%);transition:transform .35s cubic-bezier(.3,1,.4,1);
+  display:flex;flex-direction:column;
+}
+.notebook.open{transform:translateX(0);}
+.nb-head{
+  display:flex;align-items:center;gap:10px;
+  padding:16px 18px;border-bottom:1px dashed rgba(201,168,92,.4);
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  letter-spacing:.25em;color:var(--gold);font-size:16px;
+}
+.nb-head .nb-close{
+  margin-left:auto;background:none;border:none;color:var(--text-dim);
+  font-size:20px;cursor:pointer;padding:2px 6px;
+}
+.nb-head .nb-close:hover{color:var(--gold);}
+.nb-sub{padding:10px 18px 0;font-size:12px;color:var(--text-dim);}
+.nb-sub b{color:var(--text);}
+.nb-sub .arch-tag{color:var(--teal);font-size:11px;margin-left:6px;}
+.nb-progress{margin:8px 18px 0;font-family:Consolas,monospace;font-size:12px;color:var(--gold);}
+.nb-body{flex:1;overflow-y:auto;padding:12px 14px 90px;}
+.nb-item{
+  display:flex;gap:10px;align-items:flex-start;
+  background:rgba(244,239,226,.05);border:1px solid rgba(201,168,92,.18);
+  border-radius:8px;padding:10px 12px;margin-bottom:8px;cursor:pointer;transition:.15s;
+}
+.nb-item:hover{border-color:rgba(201,168,92,.5);background:rgba(244,239,226,.08);}
+.nb-check{
+  width:20px;height:20px;flex:0 0 auto;margin-top:2px;
+  border:2px solid rgba(201,168,92,.5);border-radius:5px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:transparent;transition:.2s;
+}
+.nb-item.done .nb-check{background:var(--magenta);border-color:var(--magenta);color:#FFF;}
+.nb-main{flex:1;min-width:0;}
+.nb-text{font-size:14px;color:var(--text);word-break:break-word;line-height:1.45;}
+.nb-item.done .nb-text{color:var(--text-dim);text-decoration:line-through;}
+.nb-time{font-family:Consolas,monospace;font-size:11px;color:var(--gold);margin-top:3px;}
+.nb-time .lap{color:var(--text-dim);}
+.nb-del{background:none;border:none;color:rgba(155,168,176,.35);cursor:pointer;font-size:15px;padding:0 2px;}
+.nb-del:hover{color:var(--danger);}
+.nb-hint{margin:0 18px;padding:8px 0 0;font-size:11px;color:var(--text-dim);}
+.nb-add{
+  position:absolute;left:0;right:0;bottom:0;
+  padding:12px 14px calc(12px + env(safe-area-inset-bottom,0px));display:flex;gap:8px;
+  background:rgba(20,16,10,.92);border-top:1px dashed rgba(201,168,92,.4);
+}
+.nb-add input{
+  flex:1;background:rgba(244,239,226,.07);border:1px solid rgba(201,168,92,.3);
+  border-radius:8px;color:var(--text);padding:9px 12px;font-size:14px;font-family:inherit;
+}
+.nb-add input:focus{outline:none;border-color:var(--gold);}
+.nb-add button{
+  background:var(--gold);border:none;border-radius:8px;color:#1A1408;font-weight:700;
+  padding:9px 14px;font-size:13px;cursor:pointer;white-space:nowrap;
+}
+.nb-empty{color:var(--text-dim);font-size:13px;text-align:center;padding:30px 16px;
+  border:1px dashed rgba(201,168,92,.25);border-radius:8px;margin-top:6px;}
+.nb-bg{
+  position:fixed;inset:0;z-index:44;background:rgba(6,14,22,.4);
+  opacity:0;pointer-events:none;transition:opacity .3s;
+}
+.nb-bg.open{opacity:1;pointer-events:auto;}
+
+/* ---------- Logbook ---------- */
+.logbook{margin-top:26px;}
+.section-title{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:15px;letter-spacing:.3em;color:var(--gold);
+  display:flex;align-items:center;gap:12px;margin-bottom:12px;
+}
+.section-title::after{content:"";flex:1;height:1px;background:rgba(201,168,92,.25);}
+.log-list{display:flex;flex-direction:column;gap:6px;}
+.log-item{
+  display:flex;gap:14px;align-items:baseline;
+  background:var(--navy);border:1px solid rgba(155,168,176,.12);
+  border-left:3px solid var(--magenta);
+  border-radius:6px;padding:9px 14px;font-size:13px;
+}
+.log-item.sys{border-left-color:var(--teal);}
+.log-date{font-family:Consolas,monospace;font-size:11px;color:var(--text-dim);flex:0 0 auto;}
+.log-pos{font-family:Consolas,monospace;font-size:11px;color:var(--gold);flex:0 0 auto;min-width:44px;}
+.log-note{color:var(--text);flex:1;word-break:break-word;}
+.log-item.sys .log-note{color:var(--text-dim);}
+.log-del{background:none;border:none;color:rgba(155,168,176,.4);cursor:pointer;font-size:14px;padding:0 2px;}
+.log-del:hover{color:var(--danger);}
+.empty{color:var(--text-dim);font-size:13px;padding:16px;text-align:center;
+  border:1px dashed rgba(155,168,176,.25);border-radius:8px;}
+
+/* ---------- Archive ---------- */
+.archive{margin-top:34px;}
+.arch-item{
+  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  background:rgba(23,41,58,.6);border:1px solid rgba(201,168,92,.2);
+  border-radius:8px;padding:10px 16px;margin-bottom:8px;font-size:13px;
+}
+.arch-item .flag{font-size:18px;}
+.arch-name{font-weight:600;color:var(--text);}
+.arch-meta{font-family:Consolas,monospace;font-size:11px;color:var(--text-dim);}
+.arch-todo{
+  background:var(--navy-light);border:1px solid rgba(201,168,92,.4);color:var(--gold);
+  border-radius:6px;padding:4px 12px;font-size:12px;cursor:pointer;
+}
+.arch-todo:hover{background:rgba(201,168,92,.12);}
+.arch-del{margin-left:auto;background:none;border:none;color:rgba(155,168,176,.4);cursor:pointer;}
+.arch-del:hover{color:var(--danger);}
+
+/* ---------- Treasure collection ---------- */
+.collection-panel{
+  background:var(--navy);border:1px solid rgba(201,168,92,.3);
+  border-radius:var(--radius);padding:22px;box-shadow:0 8px 30px rgba(0,0,0,.35);
+}
+.coll-summary{
+  display:flex;gap:26px;flex-wrap:wrap;margin-bottom:18px;
+  font-family:Consolas,monospace;font-size:13px;color:var(--text-dim);
+}
+.coll-summary b{color:var(--gold);font-size:17px;}
+.treasure-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;}
+.t-cell{
+  aspect-ratio:1;border-radius:10px;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  border:1px solid rgba(155,168,176,.2);background:rgba(15,30,44,.6);
+  transition:.2s;
+}
+.t-cell.owned{
+  border-color:rgba(201,168,92,.55);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 20%, rgba(201,168,92,.16), transparent),
+    rgba(30,26,15,.7);
+  box-shadow:inset 0 0 20px rgba(201,168,92,.08);
+}
+.t-cell.owned:hover{transform:translateY(-3px);box-shadow:0 6px 16px rgba(201,168,92,.25);}
+.t-letter{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  font-size:34px;font-weight:700;line-height:1;
+  background:linear-gradient(160deg,#F5E3A8,#C9A85C 45%,#8E6F2E);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 3px rgba(0,0,0,.5));
+}
+.t-cell.unowned .t-letter{background:none;color:rgba(155,168,176,.22);filter:none;}
+.t-count{font-family:Consolas,monospace;font-size:11px;color:var(--gold);}
+.t-cell.unowned .t-count{color:rgba(155,168,176,.25);}
+
+/* ---------- Modal ---------- */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(6,14,22,.7);backdrop-filter:blur(3px);
+  display:none;align-items:center;justify-content:center;z-index:50;padding:16px;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--navy);border:1px solid rgba(201,168,92,.4);border-radius:12px;
+  width:100%;max-width:440px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.5);
+  animation:pop .25s cubic-bezier(.3,1.4,.5,1);
+  max-height:90vh;max-height:90dvh;overflow-y:auto;
+}
+@keyframes pop{from{transform:scale(.92);opacity:0;}}
+.modal h2{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:17px;letter-spacing:.2em;color:var(--gold);margin-bottom:16px;
+}
+.field{margin-bottom:14px;}
+.field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:5px;}
+.field input,.field textarea,.field select{
+  width:100%;background:var(--navy-deep);border:1px solid rgba(155,168,176,.3);
+  border-radius:6px;color:var(--text);padding:9px 12px;font-size:14px;font-family:inherit;
+}
+.field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--gold);}
+.field textarea{resize:vertical;min-height:70px;}
+.field .hint{font-size:11px;color:var(--text-dim);margin-top:4px;}
+.dur-row{display:flex;gap:8px;align-items:center;transition:opacity .2s;}
+.dur-row.disabled{opacity:.35;pointer-events:none;}
+.dur-row select{flex:1;}
+.dur-row span{color:var(--text-dim);font-size:13px;flex:0 0 auto;}
+.mode-row{display:flex;gap:8px;}
+.mode-opt{
+  flex:1;display:flex;align-items:center;gap:8px;cursor:pointer;
+  background:var(--navy-deep);border:1px solid rgba(155,168,176,.3);
+  border-radius:8px;padding:10px 12px;font-size:13px;color:var(--text-dim);transition:.15s;
+}
+.mode-opt:has(input:checked){border-color:var(--gold);color:var(--text);background:rgba(201,168,92,.08);}
+.mode-opt input{accent-color:#C9A85C;}
+.modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px;}
+.btn-cancel{background:none;border:1px solid rgba(155,168,176,.3);color:var(--text-dim);
+  border-radius:8px;padding:9px 18px;cursor:pointer;font-size:13px;}
+.btn-ok{
+  background:var(--gold);border:none;border-radius:8px;color:#1A1408;
+  font-weight:700;padding:9px 22px;cursor:pointer;font-size:13px;letter-spacing:.05em;
+}
+.btn-ok:hover{filter:brightness(1.08);}
+
+/* 宝獲得モーダル */
+.treasure-card{text-align:center;max-width:340px;}
+.treasure-card .t-chest{font-size:44px;}
+.treasure-card .t-big{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  font-size:88px;font-weight:700;line-height:1.15;margin:6px 0;
+  background:linear-gradient(160deg,#F5E3A8,#C9A85C 45%,#8E6F2E);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));
+  animation:tpop .55s cubic-bezier(.3,1.6,.5,1);
+}
+@keyframes tpop{from{transform:scale(.2) rotate(-16deg);opacity:0;}}
+.treasure-card p{color:var(--text-dim);font-size:14px;margin-bottom:18px;}
+.treasure-card p b{color:var(--gold);}
+
+/* ---------- Arrival ---------- */
+.arrival{
+  position:fixed;inset:0;z-index:60;display:none;align-items:center;justify-content:center;
+  background:rgba(6,14,22,.75);
+}
+.arrival.open{display:flex;}
+.arrival-card{
+  text-align:center;background:var(--navy);border:2px solid var(--gold);
+  border-radius:14px;padding:36px 46px;animation:pop .4s cubic-bezier(.3,1.5,.5,1);
+  box-shadow:0 0 80px rgba(201,168,92,.3);position:relative;z-index:2;
+}
+.arrival-card .flag{font-size:48px;}
+.arrival-card h2{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:23px;letter-spacing:.3em;color:var(--gold);margin:10px 0 6px;
+}
+.arrival-card p{color:var(--text-dim);font-size:14px;margin-bottom:14px;max-width:340px;}
+.arrival-loot{
+  display:flex;align-items:center;justify-content:center;gap:12px;
+  margin-bottom:20px;padding:10px;border:1px dashed rgba(201,168,92,.4);border-radius:10px;
+  font-size:13px;color:var(--text-dim);
+}
+.arrival-loot .loot-letter{
+  font-family:"Hiragino Mincho ProN","Yu Mincho",Georgia,serif;
+  font-size:40px;font-weight:700;line-height:1;
+  background:linear-gradient(160deg,#F5E3A8,#C9A85C 45%,#8E6F2E);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  filter:drop-shadow(0 2px 4px rgba(0,0,0,.5));
+}
+.confetti{position:absolute;top:-8px;width:9px;height:14px;opacity:.95;
+  animation:fall linear forwards;z-index:1;}
+@keyframes fall{to{transform:translateY(105vh) rotate(720deg);opacity:.7;}}
+
+.fullspeed-banner{
+  position:absolute;left:50%;top:14%;transform:translateX(-50%);
+  background:rgba(15,30,44,.85);border:2px solid var(--gold);border-radius:10px;
+  padding:8px 22px;z-index:8;
+  font-family:"Hiragino Mincho ProN","Yu Mincho",serif;
+  font-size:16px;letter-spacing:.3em;color:var(--gold);white-space:nowrap;
+  animation:bannerin .5s cubic-bezier(.3,1.5,.5,1);
+}
+@keyframes bannerin{from{transform:translateX(-50%) scale(.6);opacity:0;}}
+.fs-spray line{stroke:#FFFFFF;stroke-width:2;stroke-linecap:round;opacity:.85;}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
+}
+@media (max-width:640px){
+  .app{padding:14px 10px 80px;}
+  h1{font-size:19px;letter-spacing:.18em;}
+  .subtitle{display:none;}
+  header{padding-bottom:10px;margin-bottom:12px;}
+  .btn-ghost{font-size:11px;padding:4px 9px;}
+
+  /* iOS Safariのフォーカス時自動ズームを防止（16px以上必須） */
+  .field input,.field textarea,.field select,.nb-add input,.dur-row select{font-size:16px;}
+
+  .chart-panel{padding:8px;}
+  .wx-badge{top:6px;left:6px;font-size:10px;padding:3px 7px;gap:5px;}
+  .sail-badges{top:6px;right:6px;gap:4px;}
+  .sail-badge,.pomo-badge{font-size:10px;padding:3px 8px;}
+  .islander{font-size:11px;max-width:160px;padding:6px 10px;}
+  .islander .who{font-size:9px;}
+  .fullspeed-banner{font-size:13px;letter-spacing:.2em;padding:6px 14px;}
+
+  .stats{grid-template-columns:auto 1fr;gap:10px 14px;margin-top:12px;}
+  .stat{text-align:left;}
+  .pct-big{font-size:27px;}
+  .progress-track{min-width:90px;}
+
+  .log-row{gap:8px;margin-top:12px;}
+  .btn-primary{font-size:15px;padding:13px 14px;min-width:150px;}
+  .btn-note,.btn-pomo{font-size:13px;padding:13px 10px;min-width:104px;}
+  .btn-secondary{padding:13px 12px;font-size:12px;}
+
+  .log-item{gap:8px;padding:8px 10px;font-size:12px;flex-wrap:wrap;}
+  .log-pos{min-width:38px;}
+
+  .todo-dock{top:44%;}
+  .td-panel{width:min(200px,58vw);padding:12px 12px;}
+  .td-title{font-size:11px;}
+  .td-item{font-size:11.5px;}
+  .td-tab{width:26px;font-size:11px;padding:12px 0;letter-spacing:.16em;}
+
+  .notebook-btn{width:54px;height:54px;font-size:23px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));}
+  .notebook{width:min(320px,90vw);}
+  .nb-body{padding:10px 10px 88px;}
+
+  .treasure-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;}
+  .t-letter{font-size:26px;}
+  .collection-panel{padding:14px;}
+  .coll-summary{gap:16px;}
+
+  .arch-item{gap:8px;padding:9px 12px;font-size:12px;}
+  .arch-del{margin-left:0;}
+
+  .modal{padding:18px;}
+  .treasure-card .t-big{font-size:68px;}
+  .arrival-card{padding:26px 20px;margin:0 6px;}
+  .arrival-card .flag{font-size:40px;}
+  .arrival-card h2{font-size:19px;letter-spacing:.2em;}
+  .arrival-card p{font-size:13px;}
+}
+@media (max-width:420px){
+  .header-actions{width:100%;justify-content:flex-end;}
+  .btn-primary{flex:1 1 100%;}
+  .mode-row{flex-direction:column;}
+  .td-panel{width:56vw;}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div class="title-block">
+      <h1>作業の航海日誌</h1>
+      <span class="subtitle">SHIP'S LOG — CHART No.1</span>
+    </div>
+    <div class="header-actions">
+      <button class="btn-ghost" id="muteBtn" onclick="toggleMute()">🔊 音</button>
+      <button class="btn-ghost" onclick="exportData()">書き出し</button>
+      <button class="btn-ghost" onclick="document.getElementById('importFile').click()">読み込み</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+    </div>
+  </header>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="main"></div>
+  <div class="archive" id="archiveSection"></div>
+</div>
+
+<!-- Todoドック（画面左端） -->
+<div class="todo-dock closed" id="todoDock" onclick="toggleDock()" style="display:none" title="クリックで出し入れ">
+  <div class="td-panel">
+    <div class="td-title">残 り の 工 程</div>
+    <div id="tdList"></div>
+  </div>
+  <div class="td-tab">📋 工程</div>
+</div>
+
+<!-- 工程手帳 -->
+<button class="notebook-btn" id="nbBtn" onclick="toggleNotebook()" title="工程手帳を開く">📖
+  <span class="nb-count" id="nbCount" style="display:none">0</span>
+</button>
+<div class="nb-bg" id="nbBg" onclick="toggleNotebook(false)"></div>
+<div class="notebook" id="notebook">
+  <div class="nb-head">工 程 手 帳
+    <button class="nb-close" onclick="toggleNotebook(false)">×</button>
+  </div>
+  <div class="nb-sub" id="nbSub"></div>
+  <div class="nb-progress" id="nbProg"></div>
+  <div class="nb-hint">💡 工程を3つ達成するごとに宝を1つ発見！</div>
+  <div class="nb-body" id="nbBody"></div>
+  <div class="nb-add">
+    <input id="inpTodo" placeholder="工程・Todoを追加" onkeydown="if(event.key==='Enter')addTodo()">
+    <button onclick="addTodo()">＋</button>
+  </div>
+</div>
+
+<!-- 新規航路モーダル -->
+<div class="modal-bg" id="newModal">
+  <div class="modal">
+    <h2>新しい航路を引く</h2>
+    <div class="field">
+      <label>作業・プロジェクト名（船名）</label>
+      <input id="inpName" placeholder="例：Yggd-memo フェーズ3">
+    </div>
+    <div class="field">
+      <label>目的地（ゴールの名前）</label>
+      <input id="inpGoal" placeholder="例：β版リリース港">
+    </div>
+    <div class="field">
+      <label>航海のモード</label>
+      <div class="mode-row">
+        <label class="mode-opt"><input type="radio" name="vmode" value="time" checked onchange="onModeChange()"> ⏳ 時間目標</label>
+        <label class="mode-opt"><input type="radio" name="vmode" value="free" onchange="onModeChange()"> ♾ 無制限</label>
+      </div>
+      <div class="hint" id="modeHint">時間目標：出航中、実時間の経過で船が進みます</div>
+    </div>
+    <div class="field" id="durField">
+      <label>目的地までの距離（目標作業時間）</label>
+      <div class="dur-row" id="durRow">
+        <select id="selH"></select><span>時間</span>
+        <select id="selM"></select><span>分</span>
+      </div>
+    </div>
+    <div class="field">
+      <label>工程・Todo（1行に1つ。あとから手帳でも追加できます）</label>
+      <textarea id="inpTodos" placeholder="例：&#10;要件を書き出す&#10;画面モックを作る&#10;実装する"></textarea>
+      <div class="hint">すべての工程を終えると、船は全速力で目的地へ向かいます</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('newModal')">やめる</button>
+      <button class="btn-ok" onclick="createVoyage()">航路を引く</button>
+    </div>
+  </div>
+</div>
+
+<!-- 記帳モーダル -->
+<div class="modal-bg" id="noteModal">
+  <div class="modal">
+    <h2>日誌に記帳</h2>
+    <div class="field">
+      <label>メモ（現在地 <span id="notePos" style="color:var(--gold);font-family:Consolas,monospace"></span> に記録されます）</label>
+      <textarea id="inpNote" placeholder="今の状況・気づき・次にやること など"></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeModal('noteModal')">やめる</button>
+      <button class="btn-ok" onclick="addNote()">記帳する</button>
+    </div>
+  </div>
+</div>
+
+<!-- 宝獲得モーダル -->
+<div class="modal-bg" id="treasureModal">
+  <div class="modal treasure-card">
+    <div class="t-chest">🪙</div>
+    <div class="t-big" id="tLetter">A</div>
+    <p id="tMsg">宝を手に入れた！</p>
+    <button class="btn-ok" onclick="closeModal('treasureModal')">宝物庫にしまう</button>
+  </div>
+</div>
+
+<!-- 入港演出 -->
+<div class="arrival" id="arrival">
+  <div class="arrival-card">
+    <div class="flag" id="arrivalFlag">⚓</div>
+    <h2 id="arrivalTitle">入 港</h2>
+    <p id="arrivalMsg"></p>
+    <div class="arrival-loot" id="arrivalLoot" style="display:none">
+      入港の戦利品：<span class="loot-letter" id="lootLetter">A</span>
+    </div>
+    <button class="btn-ok" onclick="closeArrival()">航海を記録に残す</button>
+  </div>
+</div>
+
+<script>
+/* ================= Data ================= */
+const KEY='voyage-log-v5';
+let state={voyages:[],activeId:null,muted:false,treasures:[],view:'chart',dockOpen:true};
+
+function normalizeVoyage(v){
+  if(!v.mode)v.mode=(v.targetMinutes==null&&v.targetHours==null)?'free':'time';
+  if(v.mode==='time'&&v.targetMinutes==null)v.targetMinutes=(v.targetHours||1)*60;
+  if(!v.sessions)v.sessions=[];
+  if(!v.logs)v.logs=[];
+  if(!v.todos)v.todos=[];
+  if(!v.passed)v.passed=[];
+  if(v.accumMs==null)v.accumMs=0;
+  if(v.todoRewards==null)v.todoRewards=0;
+  if(v.sessBreakMs==null)v.sessBreakMs=0;
+  if(v.pomo===undefined)v.pomo=null;
+  v.todos.forEach(t=>{if(t.elapsedAtDone===undefined)t.elapsedAtDone=null;});
+  return v;
+}
+function load(){
+  try{
+    let raw=localStorage.getItem(KEY)||localStorage.getItem('voyage-log-v4')
+      ||localStorage.getItem('voyage-log-v3')||localStorage.getItem('voyage-log-v2');
+    if(raw)state=JSON.parse(raw);
+  }catch(e){}
+  if(!state.voyages)state.voyages=[];
+  if(!state.treasures)state.treasures=[];
+  if(!state.view)state.view='chart';
+  if(state.dockOpen===undefined)state.dockOpen=true;
+  state.voyages.forEach(normalizeVoyage);
+}
+function save(){localStorage.setItem(KEY,JSON.stringify(state));}
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ================= Sound ================= */
+let audioCtx=null;
+function ac(){
+  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==='suspended')audioCtx.resume();
+  return audioCtx;
+}
+function tone(freq,dur,type='sine',vol=.18,when=0,slideTo=null){
+  if(state.muted)return;
+  try{
+    const c=ac(),o=c.createOscillator(),g=c.createGain();
+    const t=c.currentTime+when;
+    o.type=type;o.frequency.setValueAtTime(freq,t);
+    if(slideTo)o.frequency.exponentialRampToValueAtTime(slideTo,t+dur);
+    g.gain.setValueAtTime(0,t);
+    g.gain.linearRampToValueAtTime(vol,t+.02);
+    g.gain.exponentialRampToValueAtTime(.001,t+dur);
+    o.connect(g);g.connect(c.destination);
+    o.start(t);o.stop(t+dur+.05);
+  }catch(e){}
+}
+function bell(when=0,vol=.16){
+  tone(880,1.1,'sine',vol,when);
+  tone(1320,.7,'sine',vol*.4,when);
+  tone(2200,.35,'sine',vol*.2,when);
+}
+const SE={
+  depart(){tone(146,1.3,'sawtooth',.10,0,138);tone(148,1.3,'triangle',.10,0,140);tone(73,1.3,'sine',.08);},
+  anchor(){bell(0);bell(.55);},
+  write(){tone(660,.07,'triangle',.14);tone(990,.09,'triangle',.10,.07);},
+  todoDone(){tone(523,.13,'sine',.16);tone(659,.13,'sine',.16,.11);tone(784,.3,'sine',.16,.22);},
+  todoUndo(){tone(440,.12,'sine',.10);},
+  cheer(){tone(784,.1,'triangle',.12);tone(988,.1,'triangle',.12,.09);tone(1175,.18,'triangle',.12,.18);},
+  fullspeed(){tone(146,2.2,'sawtooth',.11,0,160);tone(73,2.4,'sine',.09);tone(55,2.4,'square',.045);},
+  pomoBreak(){bell(0,.14);},
+  pomoWork(){tone(180,.5,'sawtooth',.09,0,170);tone(90,.5,'sine',.07);},
+  treasure(){[1047,1319,1568,2093].forEach((f,i)=>tone(f,.35,'triangle',.13,i*.1));
+    tone(2637,.5,'sine',.08,.42);},
+  arrive(){
+    bell(0);bell(.5);bell(1.0);
+    [523,659,784,1046].forEach((f,i)=>tone(f,.6,'triangle',.12,1.2+i*.14));
+    tone(392,1.4,'sine',.08,1.2);
+  }
+};
+function toggleMute(){
+  state.muted=!state.muted;
+  document.getElementById('muteBtn').textContent=state.muted?'🔇 消音':'🔊 音';
+  save();
+}
+
+/* ================= Routes（島の隣をかすめる航路）＋ゴール島 ================= */
+const ROUTES=[
+  // 母港(左下)→霞島の東縁→帆立岩の南縁→北東のゴール島
+  {d:'M 85,528 C 170,495 260,455 320,400 C 380,352 350,270 420,228 C 480,196 520,170 585,148 C 660,124 760,210 828,224 C 884,235 900,170 912,108',
+   start:[85,528],end:[912,108],island:{cx:948,cy:82},
+   zones:[{at:30,island:'霞島',x:300,y:390},{at:54,island:'帆立岩',x:560,y:150}]},
+  // 母港(左上)→霞島の西縁→南縁→燈台礁の北縁→南東のゴール島
+  {d:'M 88,118 C 150,150 180,210 172,280 C 165,350 230,412 330,428 C 450,446 560,430 618,392 C 660,365 700,350 760,368 C 838,388 890,450 915,505',
+   start:[88,118],end:[915,505],island:{cx:950,cy:530},
+   zones:[{at:26,island:'霞島',x:172,y:280},{at:70,island:'燈台礁',x:648,y:378}]},
+  // 母港(左中)→霞島の北縁→帆立岩の南縁→燈台礁の北西縁→東のゴール島
+  {d:'M 85,320 C 130,268 180,232 258,216 C 340,200 400,175 470,152 C 540,132 580,145 620,175 C 680,220 660,300 720,345 C 780,388 870,340 916,300',
+   start:[85,320],end:[916,300],island:{cx:952,cy:298},
+   zones:[{at:22,island:'霞島',x:258,y:222},{at:45,island:'帆立岩',x:500,y:148},{at:74,island:'燈台礁',x:700,y:352}]}
+];
+const CHEERS=[
+  'おーい！がんばれー！','いい風が吹いてるよ！','その調子だ、船長！',
+  '無理は禁物だよ〜','ゴールはもうすぐさ！','休憩も大事だぞ！',
+  '良い航海を！','ここまで来たんだね、すごい！','追い風を送るよ！'
+];
+
+/* ================= Ambience ================= */
+const WXS=[
+  {k:'wx-sunny', icon:'☀️',label:'晴れ'},
+  {k:'wx-cloudy',icon:'☁️',label:'曇り'},
+  {k:'wx-storm', icon:'⛈️',label:'嵐'}
+];
+function randomWx(){
+  const r=Math.random();
+  return WXS[r<.55?0:r<.85?1:2];
+}
+let currentWx=randomWx();
+setInterval(()=>{currentWx=randomWx();applyAmbience();},240000);
+
+const TODS=[
+  {k:'tod-morning', icon:'🌅',label:'朝'},
+  {k:'tod-noon',    icon:'🌞',label:'昼'},
+  {k:'tod-evening', icon:'🌇',label:'夕'},
+  {k:'tod-night',   icon:'🌙',label:'夜'},
+  {k:'tod-midnight',icon:'🌌',label:'深夜'}
+];
+const todStart=Date.now();
+const todOffset=Math.floor(Math.random()*5);
+function currentTod(){
+  return TODS[(todOffset+Math.floor((Date.now()-todStart)/600000))%5];
+}
+function applyAmbience(){
+  const frame=document.getElementById('chartFrame');
+  if(!frame)return;
+  const tod=currentTod();
+  WXS.forEach(w=>frame.classList.remove(w.k));
+  TODS.forEach(t=>frame.classList.remove(t.k));
+  frame.classList.add(currentWx.k,tod.k);
+  const badge=document.getElementById('wxBadge');
+  if(badge)badge.innerHTML=`<span>${tod.icon} ${tod.label}</span><span style="opacity:.4">｜</span><span>${currentWx.icon} ${currentWx.label}</span>`;
+}
+
+/* ================= Helpers ================= */
+function sessBreak(v){
+  let b=v.sessBreakMs||0;
+  if(v.sailing&&v.pomo&&v.pomo.phase==='break')b+=Date.now()-v.pomo.phaseStart;
+  return b;
+}
+function elapsedMs(v){
+  if(!v.sailing)return v.accumMs;
+  return v.accumMs+Math.max(0,(Date.now()-v.sailStart)-sessBreak(v));
+}
+function progressOf(v){
+  if(v.archived)return 100;
+  if(v.mode==='free'){
+    if(!v.todos.length)return 0;
+    return v.todos.filter(t=>t.done).length/v.todos.length*100;
+  }
+  return Math.min(100,elapsedMs(v)/(v.targetMinutes*60000)*100);
+}
+function fmtDur(ms){
+  const m=Math.floor(ms/60000);
+  const h=Math.floor(m/60),r=m%60;
+  if(h&&r)return`${h}時間${r}分`;
+  if(h)return`${h}時間`;
+  if(r)return`${r}分`;
+  return'1分未満';
+}
+function fmtClock(ms){
+  const s=Math.floor(ms/1000);
+  const h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;
+  return`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(ss).padStart(2,'0')}`;
+}
+function fmtMMSS(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  return`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+}
+function fmtDate(ts){
+  const d=new Date(ts);
+  return`${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ================= Chart SVG ================= */
+function goalIslandSVG(r){
+  const {cx,cy}=r.island;
+  const [ex,ey]=r.end;
+  return `
+    <ellipse cx="${cx}" cy="${cy}" rx="62" ry="46" fill="#BFDDE8"/>
+    <ellipse cx="${cx}" cy="${cy}" rx="46" ry="33" fill="#EBDBA6" stroke="#B49B5E" stroke-width="1.4"/>
+    <ellipse cx="${cx+4}" cy="${cy-4}" rx="24" ry="15" fill="none" stroke="#C9B478" stroke-width="1"/>
+    <line x1="${ex}" y1="${ey}" x2="${(ex+cx)/2}" y2="${(ey+cy)/2}" stroke="#8A6F3E" stroke-width="5" stroke-linecap="round"/>
+    <line x1="${ex}" y1="${ey}" x2="${(ex+cx)/2}" y2="${(ey+cy)/2}" stroke="#B49B5E" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="1 6"/>
+    <g transform="translate(${cx},${cy-14})">
+      <line x1="0" y1="0" x2="0" y2="-20" stroke="#2E3B45" stroke-width="1.8"/>
+      <polygon points="0,-20 15,-14 0,-8" fill="#C2418C"/>
+    </g>`;
+}
+function chartSVG(v,progress){
+  const r=ROUTES[v.routeIndex%ROUTES.length];
+  return `
+  <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" aria-label="海図">
+    <defs>
+      <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#DCEBF1"/><stop offset="1" stop-color="#C3DCE7"/>
+      </linearGradient>
+      <radialGradient id="lightbeam" cx="0" cy="0" r="1">
+        <stop offset="0" stop-color="rgba(255,238,170,.6)"/><stop offset="1" stop-color="rgba(255,238,170,0)"/>
+      </radialGradient>
+    </defs>
+
+    <g class="chart-bg">
+      <rect width="1000" height="620" fill="url(#sea)"/>
+
+      <g stroke="#8FB4C4" stroke-width=".6" opacity=".35">
+        ${[125,250,375,500].map(y=>`<line x1="0" y1="${y}" x2="1000" y2="${y}"/>`).join('')}
+        ${[200,400,600,800].map(x=>`<line x1="${x}" y1="0" x2="${x}" y2="620"/>`).join('')}
+      </g>
+      <g font-family="Consolas,monospace" font-size="10" fill="#6E93A3" opacity=".7">
+        <text x="6" y="121">36°10'N</text><text x="6" y="246">36°00'N</text>
+        <text x="6" y="371">35°50'N</text><text x="6" y="496">35°40'N</text>
+        <text x="184" y="614">140°10'E</text><text x="384" y="614">140°20'E</text>
+        <text x="584" y="614">140°30'E</text><text x="784" y="614">140°40'E</text>
+      </g>
+
+      <g font-family="Consolas,monospace" font-size="11" fill="#5E8496" opacity=".8">
+        <text x="150" y="180">42</text><text x="330" y="120">57</text><text x="640" y="80">88</text>
+        <text x="740" y="140">104</text><text x="120" y="430">31</text><text x="380" y="500">63</text>
+        <text x="560" y="540">49</text><text x="880" y="560">72</text><text x="870" y="300">95</text>
+        <text x="420" y="300" font-style="italic">76</text><text x="180" y="560">28</text>
+        <text x="560" y="290">67</text>
+      </g>
+
+      <g>
+        <path d="M 165,300 C 150,260 200,225 260,232 C 330,240 355,290 335,340 C 315,392 230,400 190,368 C 165,348 172,320 165,300 Z" fill="#BFDDE8"/>
+        <path d="M 630,430 C 625,395 680,375 740,382 C 800,390 830,430 812,470 C 792,514 700,516 660,486 C 636,468 634,450 630,430 Z" fill="#BFDDE8"/>
+        <path d="M 455,70 C 470,52 515,50 540,66 C 566,84 560,116 530,126 C 498,136 452,120 450,96 C 449,86 448,78 455,70 Z" fill="#BFDDE8"/>
+        <path d="M 185,300 C 175,270 212,244 258,250 C 312,257 332,295 316,332 C 300,372 235,378 202,352 C 183,336 190,316 185,300 Z" fill="#EBDBA6" stroke="#B49B5E" stroke-width="1.4"/>
+        <path d="M 648,432 C 645,406 686,392 736,398 C 784,404 806,434 792,462 C 776,494 706,496 674,472 C 655,458 650,446 648,432 Z" fill="#EBDBA6" stroke="#B49B5E" stroke-width="1.4"/>
+        <path d="M 468,76 C 480,63 512,62 530,74 C 548,87 543,108 522,115 C 499,122 466,110 465,93 C 465,86 464,81 468,76 Z" fill="#EBDBA6" stroke="#B49B5E" stroke-width="1.4"/>
+        <path d="M 215,300 C 210,282 235,266 262,270 C 292,275 304,297 294,318 C 284,340 244,344 224,328" fill="none" stroke="#C9B478" stroke-width="1"/>
+        <path d="M 672,434 C 672,420 698,412 728,416 C 754,420 766,436 758,452" fill="none" stroke="#C9B478" stroke-width="1"/>
+        <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif" font-size="13" fill="#7A6A3E" font-style="italic">
+          <text x="222" y="310">霞島</text>
+          <text x="700" y="446">燈台礁</text>
+          <text x="488" y="98" font-size="11">帆立岩</text>
+        </g>
+      </g>
+
+      <!-- ゴール島 -->
+      ${goalIslandSVG(r)}
+
+      <g transform="translate(786,404)">
+        <rect x="-4" y="-20" width="8" height="20" fill="#C2418C"/>
+        <rect x="-6" y="-24" width="12" height="5" fill="#2E3B45"/>
+        <polygon points="-7,0 7,0 5,-8 -5,-8" fill="#F4EFE2" stroke="#2E3B45" stroke-width="1"/>
+        <circle cx="0" cy="-22" r="2.4" fill="#FFE58A"/>
+        <path d="M 0,-22 L 46,-40 L 46,-6 Z" fill="url(#lightbeam)" opacity=".8">
+          <animateTransform attributeName="transform" type="rotate" from="0 0 -22" to="360 0 -22" dur="9s" repeatCount="indefinite"/>
+        </path>
+      </g>
+
+      <!-- 岩礁（全航路を避けた位置） -->
+      <g stroke="#4C6B7C" stroke-width="1.6" opacity=".85">
+        ${[[250,545],[268,560],[236,562],[852,150],[868,138]].map(([x,y])=>
+          `<path d="M ${x-5},${y} h10 M ${x},${y-5} v10 M ${x-3.5},${y-3.5} l7,7 M ${x-3.5},${y+3.5} l7,-7"/>`).join('')}
+      </g>
+      <text x="228" y="586" font-family="'Hiragino Mincho ProN',serif" font-size="10" fill="#4C6B7C" font-style="italic">岩礁注意</text>
+
+      <g transform="translate(905,555)" opacity=".9">
+        <circle r="34" fill="none" stroke="#C2418C" stroke-width="1"/>
+        <circle r="25" fill="none" stroke="#C2418C" stroke-width=".6" opacity=".6"/>
+        <g fill="#C2418C">
+          <polygon points="0,-32 4,-6 0,0 -4,-6"/><polygon points="0,32 4,6 0,0 -4,6" opacity=".55"/>
+          <polygon points="-32,0 -6,4 0,0 -6,-4" opacity=".55"/><polygon points="32,0 6,4 0,0 6,-4" opacity=".55"/>
+        </g>
+        <text y="-38" text-anchor="middle" font-family="Consolas,monospace" font-size="12" fill="#C2418C" font-weight="bold">N</text>
+      </g>
+
+      <g font-family="'Hiragino Mincho ProN','Yu Mincho',serif">
+        <circle cx="${r.start[0]}" cy="${r.start[1]}" r="7" fill="#F4EFE2" stroke="#C2418C" stroke-width="2.4"/>
+        <text x="${r.start[0]}" y="${r.start[1]+26}" text-anchor="middle" font-size="13" fill="#2E3B45">母港</text>
+        <g transform="translate(${r.end[0]},${r.end[1]})">
+          <circle r="8" fill="none" stroke="#C2418C" stroke-width="2"/>
+          <circle r="3" fill="#C2418C"/>
+          <circle r="14" fill="none" stroke="#C2418C" stroke-width="1" opacity=".5">
+            <animate attributeName="r" values="8;18" dur="2.4s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values=".6;0" dur="2.4s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+        <text x="${r.end[0]}" y="${r.end[1]-24}" text-anchor="end" font-size="14" fill="#8E2F66" font-weight="600">${esc(v.goal)}</text>
+      </g>
+
+      <path d="${r.d}" fill="none" stroke="#C2418C" stroke-width="2" stroke-dasharray="7 7" opacity=".55"/>
+      <path id="wake" d="${r.d}" fill="none" stroke="#C2418C" stroke-width="2.6" pathLength="100"
+            stroke-dasharray="${progress} 100" stroke-linecap="round"/>
+      <path id="routePath" d="${r.d}" fill="none" stroke="none"/>
+    </g>
+
+    <!-- ship -->
+    <g id="ship">
+      <g id="shipInner">
+        <g class="fs-spray" id="fsSpray" style="display:none">
+          <line x1="-20" y1="6" x2="-34" y2="4"/>
+          <line x1="-20" y1="10" x2="-38" y2="11"/>
+          <line x1="-19" y1="13" x2="-31" y2="16"/>
+        </g>
+        <g transform="scale(1.15)">
+          <path d="M -14,4 L 14,4 L 9,11 L -9,11 Z" fill="#2E3B45"/>
+          <path d="M -14,4 L 14,4 L 9,10 L -9,10 Z" fill="#3E5163"/>
+          <rect x="-4" y="-2" width="8" height="6" fill="#F4EFE2" stroke="#2E3B45" stroke-width="1"/>
+          <line x1="0" y1="-2" x2="0" y2="-16" stroke="#2E3B45" stroke-width="1.6"/>
+          <path d="M 0,-16 L 11,-5 L 0,-5 Z" fill="#F4EFE2" stroke="#2E3B45" stroke-width="1"/>
+          <path d="M 0,-14 L -8,-6 L 0,-6 Z" fill="#C2418C" opacity=".9"/>
+        </g>
+      </g>
+    </g>
+  </svg>`;
+}
+
+/* ================= Render ================= */
+function activeVoyage(){return state.voyages.find(v=>v.id===state.activeId&&!v.archived);}
+let nbVoyageId=null; // 手帳が表示している航海（nullならアクティブ航海に追従）
+function nbVoyage(){
+  if(nbVoyageId){
+    const v=state.voyages.find(x=>x.id===nbVoyageId);
+    if(v)return v;
+  }
+  return activeVoyage();
+}
+let lastP=null;
+let finishing=false;
+
+function render(){
+  const act=state.voyages.filter(v=>!v.archived);
+  if(state.view==='chart'&&!activeVoyage()&&act.length)state.activeId=act[0].id;
+
+  document.getElementById('muteBtn').textContent=state.muted?'🔇 消音':'🔊 音';
+
+  const tabs=document.getElementById('tabs');
+  tabs.innerHTML=act.map(v=>{
+    return`<button class="tab ${state.view==='chart'&&v.id===state.activeId?'active':''}" onclick="switchVoyage('${v.id}')">
+      ${v.sailing?'<span class="sailing-dot"></span>':'<span>⛵</span>'}
+      <span>${esc(v.name)}</span>
+      <span class="pct">${v.mode==='free'?'♾':''}${Math.floor(progressOf(v))}%</span></button>`;
+  }).join('')
+  +`<button class="tab tab-new" onclick="openModal('newModal')">＋ 新しい航路</button>`
+  +`<button class="tab tab-treasure ${state.view==='collection'?'active':''}" onclick="switchView('collection')">🪙 宝物庫 <span class="pct">${state.treasures.length}</span></button>`;
+
+  const main=document.getElementById('main');
+  const nbBtn=document.getElementById('nbBtn');
+
+  if(state.view==='collection'){
+    nbBtn.style.display='none';
+    renderTodoDock(null);
+    toggleNotebook(false);
+    renderCollection(main);
+  }else{
+    const v=activeVoyage();
+    if(!v){
+      main.innerHTML=`<div class="empty" style="padding:60px 20px">
+        まだ航路がありません。<br>「＋ 新しい航路」から最初の航海を始めましょう。</div>`;
+      nbBtn.style.display='none';
+      renderTodoDock(null);
+      toggleNotebook(false);
+    }else{
+      nbBtn.style.display='';
+      const p=progressOf(v);
+      main.innerHTML=`
+      <div class="chart-panel">
+        <div class="chart-frame ${v.sailing?'is-sailing':''}" id="chartFrame">
+          ${chartSVG(v,p)}
+          <div class="glints"></div>
+          <div class="clouds">
+            <div class="cloud" style="width:180px;height:50px;top:8%;animation-duration:70s;"></div>
+            <div class="cloud" style="width:240px;height:60px;top:30%;animation-duration:95s;animation-delay:-40s;"></div>
+            <div class="cloud" style="width:150px;height:44px;top:60%;animation-duration:80s;animation-delay:-20s;"></div>
+          </div>
+          <div class="rain"></div><div class="flash"></div>
+          <div class="tod-tint"></div><div class="stars"></div>
+          <div class="wx-badge" id="wxBadge"></div>
+          <div class="sail-badges">
+            <div class="sail-badge"><span class="sailing-dot"></span>航行中 <span id="sailClock">00:00:00</span></div>
+            <div class="pomo-badge" id="pomoBadge">🍅 <span id="pomoTxt"></span></div>
+          </div>
+        </div>
+        <div class="stats">
+          <div class="pct-big"><span id="pctNum">${p.toFixed(1)}</span><small>%</small></div>
+          <div class="progress-track"><div class="progress-fill" id="pFill" style="width:${p}%"></div></div>
+          <div class="stat">${v.mode==='free'?'航行時間':'航行距離'}<b id="distTxt">${statText(v)}</b></div>
+          <div class="stat">出航回数<b>${v.sessions.length+(v.sailing?1:0)} 回</b></div>
+        </div>
+        <div class="log-row">
+          <button class="btn-primary ${v.sailing?'anchored':''}" onclick="toggleSail()">
+            ${v.sailing?'⚓ 停泊する':'⛵ 出航する'}</button>
+          ${v.sailing?`<button class="btn-pomo ${v.pomo?'on':''}" onclick="togglePomo()">🍅 ${v.pomo?'ポモドーロ中':'ポモドーロ'}</button>`:''}
+          <button class="btn-note" onclick="openModal('noteModal')">✎ 記帳する</button>
+          <button class="btn-secondary" onclick="deleteVoyage('${v.id}')">破棄</button>
+        </div>
+      </div>
+
+      <div class="logbook">
+        <div class="section-title">航 海 日 誌</div>
+        <div class="log-list">
+          ${v.logs.length?[...v.logs].reverse().map(l=>`
+            <div class="log-item ${l.sys?'sys':''}">
+              <span class="log-date">${fmtDate(l.ts)}</span>
+              <span class="log-pos">${l.pos!=null?l.pos.toFixed(1)+'%':'—'}</span>
+              <span class="log-note">${esc(l.note)}</span>
+              <button class="log-del" title="消す" onclick="deleteLog('${v.id}','${l.id}')">×</button>
+            </div>`).join('')
+          :`<div class="empty">まだ記帳がありません。道中どこでも「✎ 記帳する」で残せます。</div>`}
+        </div>
+      </div>`;
+      placeShip(p);
+      lastP=p;
+      applyAmbience();
+      updatePomoBadge(v);
+      renderTodoDock(v);
+    }
+  }
+  renderNotebook();
+  renderArchive();
+  save();
+}
+function statText(v){
+  if(v.mode==='free')return`${fmtDur(elapsedMs(v))}（自由航路）`;
+  return`${fmtDur(elapsedMs(v))} / ${fmtDur(v.targetMinutes*60000)}`;
+}
+
+/* Todoドック（画面左端・クリック開閉） */
+function toggleDock(){
+  state.dockOpen=!state.dockOpen;
+  document.getElementById('todoDock').classList.toggle('closed',!state.dockOpen);
+  save();
+}
+function renderTodoDock(v){
+  const dock=document.getElementById('todoDock');
+  const list=document.getElementById('tdList');
+  if(!dock||!list)return;
+  if(!v){dock.style.display='none';return;}
+  dock.style.display='flex';
+  dock.classList.toggle('closed',!state.dockOpen);
+  const remain=v.todos.filter(t=>!t.done);
+  if(!remain.length){
+    list.innerHTML=v.todos.length
+      ?'<div class="td-done-all">全工程完了！🚩</div>'
+      :'<div class="td-done-all">工程はまだありません</div>';
+    return;
+  }
+  const show=remain.slice(0,7);
+  list.innerHTML=show.map(t=>`<div class="td-item">□ ${esc(t.text)}</div>`).join('')
+    +(remain.length>7?`<div class="td-more">…他 ${remain.length-7} 件</div>`:'');
+}
+
+function renderCollection(main){
+  const counts={};
+  state.treasures.forEach(t=>{counts[t.letter]=(counts[t.letter]||0)+1;});
+  const kinds=Object.keys(counts).length;
+  const letters='ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+  main.innerHTML=`
+  <div class="collection-panel">
+    <div class="section-title">宝 物 庫</div>
+    <div class="coll-summary">
+      <span>収集 <b>${state.treasures.length}</b> 個</span>
+      <span>図鑑 <b>${kinds}</b> / 26 種</span>
+    </div>
+    <div class="treasure-grid">
+      ${letters.map(L=>{
+        const c=counts[L]||0;
+        return`<div class="t-cell ${c?'owned':'unowned'}" title="${c?`宝『${L}』 ×${c}`:'未発見'}">
+          <div class="t-letter">${c?L:'?'}</div>
+          <div class="t-count">${c?'×'+c:'—'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>
+  <div class="empty" style="margin-top:14px">
+    宝の入手方法：工程を3つ達成するごとに1個 ／ 航海を完了（入港）するごとに1個。全26種、同じ確率で出ます。
+  </div>`;
+}
+
+function renderArchive(){
+  const arch=state.voyages.filter(v=>v.archived);
+  const el=document.getElementById('archiveSection');
+  if(!arch.length||state.view==='collection'){el.innerHTML='';return;}
+  el.innerHTML=`<div class="section-title">完 了 し た 航 海</div>`+
+    arch.map(v=>{
+      const done=v.todos.filter(t=>t.done).length;
+      return`<div class="arch-item">
+      <span class="flag">🏁</span>
+      <span class="arch-name">${esc(v.name)}</span>
+      <span class="arch-meta">→ ${esc(v.goal)} ／ ${fmtDur(v.accumMs)}・出航${v.sessions.length}回 ／ ${fmtDate(v.archivedAt)} 入港</span>
+      ${v.todos.length?`<button class="arch-todo" onclick="openNotebookFor('${v.id}')">📖 工程 ${done}/${v.todos.length}</button>`:''}
+      <button class="arch-del" title="記録を消す" onclick="deleteVoyage('${v.id}')">×</button>
+    </div>`;}).join('');
+}
+
+/* ================= Notebook ================= */
+function toggleNotebook(force){
+  const nb=document.getElementById('notebook');
+  const bg=document.getElementById('nbBg');
+  const open=force!==undefined?force:!nb.classList.contains('open');
+  nb.classList.toggle('open',open);
+  bg.classList.toggle('open',open);
+  if(!open)nbVoyageId=null; // 閉じたらアクティブ航海追従に戻す
+  if(open){
+    renderNotebook();
+    setTimeout(()=>{const i=document.getElementById('inpTodo');if(i)i.focus();},350);
+  }
+}
+function openNotebookFor(id){
+  nbVoyageId=id;
+  toggleNotebook(true);
+}
+function renderNotebook(){
+  const v=nbVoyage();
+  const body=document.getElementById('nbBody');
+  const sub=document.getElementById('nbSub');
+  const prog=document.getElementById('nbProg');
+  const cnt=document.getElementById('nbCount');
+  if(!v){
+    body.innerHTML='<div class="nb-empty">航路がありません</div>';
+    sub.textContent='';prog.textContent='';
+    cnt.style.display='none';
+    return;
+  }
+  const av=activeVoyage();
+  const remain=(av?av.todos.filter(t=>!t.done).length:0);
+  cnt.textContent=remain;
+  cnt.style.display=remain?'':'none';
+  sub.innerHTML=`<b>${esc(v.name)}</b> の工程${v.archived?'<span class="arch-tag">（入港済・チェック可）</span>':''}`;
+  const done=v.todos.filter(t=>t.done).length;
+  prog.textContent=v.todos.length?`✓ ${done} / ${v.todos.length}${done===v.todos.length&&done>0?'　— 全工程完了！':''}`:'';
+  const doneSorted=v.todos.filter(t=>t.done&&t.elapsedAtDone!=null)
+    .sort((a,b)=>a.elapsedAtDone-b.elapsedAtDone);
+  const lapOf=t=>{
+    const i=doneSorted.indexOf(t);
+    if(i<0)return null;
+    const prev=i>0?doneSorted[i-1].elapsedAtDone:0;
+    return t.elapsedAtDone-prev;
+  };
+  body.innerHTML=v.todos.length?v.todos.map(t=>{
+    let time='';
+    if(t.done&&t.elapsedAtDone!=null){
+      const lap=lapOf(t);
+      time=`<div class="nb-time">⏱ ${fmtDur(t.elapsedAtDone)} 時点で完了`+
+        (lap!=null&&doneSorted.length>1?`<span class="lap">（区間 ${fmtDur(lap)}）</span>`:'')+`</div>`;
+    }
+    return`<div class="nb-item ${t.done?'done':''}" onclick="toggleTodo('${t.id}')">
+      <div class="nb-check">✓</div>
+      <div class="nb-main">
+        <div class="nb-text">${esc(t.text)}</div>${time}
+      </div>
+      <button class="nb-del" title="消す" onclick="event.stopPropagation();deleteTodo('${t.id}')">×</button>
+    </div>`;
+  }).join('')
+  :'<div class="nb-empty">工程を追加すると、チェックした時点までの航行時間が記録されます。<br><br>すべて終えると船は全速力で目的地へ！</div>';
+}
+
+/* ================= Ship ================= */
+function shipPoint(path,progress){
+  const L=path.getTotalLength();
+  const len=L*Math.max(0,Math.min(100,progress))/100;
+  const p=path.getPointAtLength(len);
+  const p2=path.getPointAtLength(Math.min(L,len+2));
+  const ang=Math.atan2(p2.y-p.y,p2.x-p.x)*180/Math.PI;
+  return{x:p.x,y:p.y,ang};
+}
+function placeShip(progress){
+  const path=document.getElementById('routePath');
+  const ship=document.getElementById('ship');
+  if(!path||!ship)return;
+  const{x,y,ang}=shipPoint(path,progress);
+  ship.setAttribute('transform',`translate(${x},${y}) rotate(${ang})`);
+}
+function animateShipTo(fromP,toP,dur,cb){
+  const path=document.getElementById('routePath');
+  const ship=document.getElementById('ship');
+  const wake=document.getElementById('wake');
+  const fill=document.getElementById('pFill');
+  const pct=document.getElementById('pctNum');
+  if(!path||!ship){if(cb)cb();return;}
+  const t0=performance.now();
+  const ease=t=>1-Math.pow(1-t,3);
+  function frame(now){
+    const t=Math.min(1,(now-t0)/dur);
+    const p=fromP+(toP-fromP)*ease(t);
+    const{x,y,ang}=shipPoint(path,p);
+    ship.setAttribute('transform',`translate(${x},${y}) rotate(${ang})`);
+    if(wake)wake.setAttribute('stroke-dasharray',`${p} 100`);
+    if(fill)fill.style.width=p+'%';
+    if(pct)pct.textContent=p.toFixed(1);
+    if(t<1)requestAnimationFrame(frame);else if(cb)cb();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ================= Islander cheers ================= */
+function checkIslandPass(v,prevP,p){
+  const r=ROUTES[v.routeIndex%ROUTES.length];
+  r.zones.forEach(z=>{
+    if(prevP<z.at&&p>=z.at&&!v.passed.includes(z.island)){
+      v.passed.push(z.island);
+      save();
+      showCheer(z);
+    }
+  });
+}
+function showCheer(zone){
+  const frame=document.getElementById('chartFrame');
+  if(!frame)return;
+  SE.cheer();
+  const msg=CHEERS[Math.floor(Math.random()*CHEERS.length)];
+  const div=document.createElement('div');
+  div.className='islander';
+  div.style.left=(zone.x/1000*100)+'%';
+  div.style.top=(zone.y/620*100)+'%';
+  div.innerHTML=`<span class="who">${esc(zone.island)}のみんな</span>${esc(msg)}`;
+  frame.appendChild(div);
+  setTimeout(()=>div.classList.add('fadeout'),4200);
+  setTimeout(()=>div.remove(),5000);
+}
+
+/* ================= Pomodoro ================= */
+const POMO_WORK=25*60000, POMO_BREAK=5*60000;
+function togglePomo(){
+  const v=activeVoyage();
+  if(!v||!v.sailing||finishing)return;
+  if(v.pomo){
+    if(v.pomo.phase==='break')v.sessBreakMs+=Date.now()-v.pomo.phaseStart;
+    v.pomo=null;
+    SE.write();
+  }else{
+    v.pomo={phase:'work',phaseStart:Date.now()};
+    SE.pomoWork();
+  }
+  save();
+  render();
+}
+function tickPomo(v){
+  if(!v.sailing||!v.pomo)return;
+  let guard=0;
+  while(guard++<300){
+    const dur=v.pomo.phase==='work'?POMO_WORK:POMO_BREAK;
+    if(Date.now()-v.pomo.phaseStart>=dur){
+      if(v.pomo.phase==='work'){
+        v.pomo.phase='break';
+        if(v.id===state.activeId)SE.pomoBreak();
+      }else{
+        v.sessBreakMs+=POMO_BREAK;
+        v.pomo.phase='work';
+        if(v.id===state.activeId)SE.pomoWork();
+      }
+      v.pomo.phaseStart+=dur;
+      save();
+    }else break;
+  }
+}
+function updatePomoBadge(v){
+  const badge=document.getElementById('pomoBadge');
+  const txt=document.getElementById('pomoTxt');
+  const frame=document.getElementById('chartFrame');
+  if(!badge||!txt||!frame)return;
+  frame.classList.toggle('is-pomo',!!(v.sailing&&v.pomo));
+  if(!v.sailing||!v.pomo)return;
+  const dur=v.pomo.phase==='work'?POMO_WORK:POMO_BREAK;
+  const left=dur-(Date.now()-v.pomo.phaseStart);
+  badge.classList.toggle('break',v.pomo.phase==='break');
+  txt.textContent=v.pomo.phase==='work'?`作業 ${fmtMMSS(left)}`:`☕ 休憩 ${fmtMMSS(left)}（船は漂泊中）`;
+}
+
+/* ================= Live update ================= */
+function updateLive(){
+  const v=activeVoyage();
+  if(!v||finishing)return;
+  const p=progressOf(v);
+  const pct=document.getElementById('pctNum');
+  const fill=document.getElementById('pFill');
+  const dist=document.getElementById('distTxt');
+  const clock=document.getElementById('sailClock');
+  if(pct)pct.textContent=p.toFixed(1);
+  if(fill)fill.style.width=p+'%';
+  if(dist)dist.textContent=statText(v);
+  if(clock&&v.sailing)clock.textContent=fmtClock(Math.max(0,Date.now()-v.sailStart-sessBreak(v)));
+  const wake=document.getElementById('wake');
+  if(wake)wake.setAttribute('stroke-dasharray',`${p} 100`);
+  if(v.mode!=='free')placeShip(p);
+  updatePomoBadge(v);
+  if(v.mode!=='free'&&lastP!=null&&p>lastP)checkIslandPass(v,lastP,p);
+  if(v.mode!=='free')lastP=p;
+  if(v.mode!=='free'&&v.sailing&&p>=100){
+    anchorShip(v,true);
+    arrive(v,false);
+  }
+}
+setInterval(()=>{
+  state.voyages.forEach(v=>{if(!v.archived&&v.sailing)tickPomo(v);});
+  const v=activeVoyage();
+  if(v&&v.sailing&&state.view==='chart')updateLive();
+},1000);
+setInterval(()=>{if(state.view==='chart')applyAmbience();},5000);
+
+/* ================= Actions ================= */
+function switchVoyage(id){state.view='chart';state.activeId=id;nbVoyageId=null;render();}
+function switchView(view){state.view=view;render();}
+
+function toggleSail(){
+  const v=activeVoyage();if(!v||finishing)return;
+  if(v.sailing){
+    anchorShip(v,false);
+    SE.anchor();
+    render();
+    if(v.mode!=='free'&&progressOf(v)>=100)arrive(v,false);
+  }else{
+    v.sailing=true;
+    v.sailStart=Date.now();
+    v.sessBreakMs=0;
+    SE.depart();
+    render();
+  }
+}
+function anchorShip(v,silent){
+  if(!v.sailing)return;
+  const raw=Date.now()-v.sailStart;
+  const b=sessBreak(v);
+  const dur=Math.max(0,raw-b);
+  v.accumMs+=dur;
+  v.sessions.push({start:v.sailStart,end:Date.now()});
+  v.sailing=false;v.sailStart=null;v.pomo=null;v.sessBreakMs=0;
+  v.logs.push({id:uid(),ts:Date.now(),note:`⚓ ${fmtDur(dur)} 航行して停泊${b>0?`（休憩 ${fmtDur(b)} を除く）`:''}`,pos:progressOf(v),sys:true});
+  save();
+}
+
+function onModeChange(){
+  const mode=document.querySelector('input[name="vmode"]:checked').value;
+  document.getElementById('durRow').classList.toggle('disabled',mode==='free');
+  document.getElementById('modeHint').textContent=mode==='free'
+    ?'無制限：制限時間なし。工程をチェックするたびに船が進み、全て終えると自動的に入港します'
+    :'時間目標：出航中、実時間の経過で船が進みます';
+}
+function openModal(id){
+  if(id==='newModal'){
+    document.getElementById('inpName').value='';
+    document.getElementById('inpGoal').value='';
+    document.getElementById('inpTodos').value='';
+    document.querySelector('input[name="vmode"][value="time"]').checked=true;
+    onModeChange();
+    buildDurSelects();
+  }
+  if(id==='noteModal'){
+    const v=activeVoyage();if(!v)return;
+    document.getElementById('inpNote').value='';
+    document.getElementById('notePos').textContent=progressOf(v).toFixed(1)+'% 地点';
+  }
+  document.getElementById(id).classList.add('open');
+  if(id==='noteModal')setTimeout(()=>document.getElementById('inpNote').focus(),50);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function buildDurSelects(){
+  const selH=document.getElementById('selH');
+  const selM=document.getElementById('selM');
+  selH.innerHTML=Array.from({length:51},(_,i)=>`<option value="${i}" ${i===1?'selected':''}>${i}</option>`).join('');
+  selM.innerHTML=[0,5,10,15,20,25,30,35,40,45,50,55].map(m=>`<option value="${m}">${m}</option>`).join('');
+}
+
+function createVoyage(){
+  const name=document.getElementById('inpName').value.trim();
+  const goal=document.getElementById('inpGoal').value.trim();
+  const mode=document.querySelector('input[name="vmode"]:checked').value;
+  const h=+document.getElementById('selH').value;
+  const m=+document.getElementById('selM').value;
+  const targetMinutes=mode==='free'?null:h*60+m;
+  if(!name){alert('船名（作業名）を入力してください');return;}
+  if(!goal){alert('目的地の名前を入力してください');return;}
+  if(mode==='time'&&targetMinutes<=0){alert('目標時間を1分以上にしてください');return;}
+  const todos=document.getElementById('inpTodos').value
+    .split('\n').map(s=>s.trim()).filter(Boolean)
+    .map(text=>({id:uid(),text,done:false,doneAt:null,elapsedAtDone:null}));
+  if(mode==='free'&&!todos.length){alert('無制限モードでは工程を1つ以上入力してください（工程の達成で船が進みます）');return;}
+  const v={id:uid(),name,goal,mode,targetMinutes,createdAt:Date.now(),
+    routeIndex:state.voyages.length%ROUTES.length,
+    sailing:false,sailStart:null,accumMs:0,sessions:[],logs:[],todos,passed:[],
+    todoRewards:0,sessBreakMs:0,pomo:null,
+    archived:false,archivedAt:null};
+  state.voyages.push(v);
+  state.activeId=v.id;
+  state.view='chart';
+  closeModal('newModal');
+  render();
+}
+
+function addNote(){
+  const v=activeVoyage();if(!v)return;
+  const note=document.getElementById('inpNote').value.trim();
+  if(!note){alert('メモを入力してください');return;}
+  v.logs.push({id:uid(),ts:Date.now(),note,pos:progressOf(v),sys:false});
+  SE.write();
+  closeModal('noteModal');
+  render();
+}
+
+function deleteLog(vid,lid){
+  const v=state.voyages.find(x=>x.id===vid);if(!v)return;
+  if(!confirm('この記帳を消しますか？'))return;
+  v.logs=v.logs.filter(l=>l.id!==lid);
+  render();
+}
+
+/* ---- Todo ---- */
+function addTodo(){
+  const v=nbVoyage();if(!v)return;
+  const inp=document.getElementById('inpTodo');
+  const text=inp.value.trim();
+  if(!text)return;
+  v.todos.push({id:uid(),text,done:false,doneAt:null,elapsedAtDone:null});
+  inp.value='';
+  SE.write();
+  save();
+  render();
+  const ni=document.getElementById('inpTodo');
+  if(ni)ni.focus();
+}
+function toggleTodo(id){
+  const v=nbVoyage();if(!v||finishing)return;
+  const t=v.todos.find(x=>x.id===id);if(!t)return;
+  const isActiveChart=(!v.archived&&v.id===state.activeId&&state.view==='chart');
+  const before=progressOf(v);
+  t.done=!t.done;
+  if(t.done){
+    t.doneAt=Date.now();
+    t.elapsedAtDone=elapsedMs(v);
+    SE.todoDone();
+    v.logs.push({id:uid(),ts:Date.now(),
+      note:`☑ 工程完了：${t.text}（${fmtDur(t.elapsedAtDone)} 時点）`,
+      pos:progressOf(v),sys:true});
+  }else{
+    t.doneAt=null;t.elapsedAtDone=null;
+    SE.todoUndo();
+  }
+  save();
+  render();
+  const after=progressOf(v);
+  const allDone=t.done&&v.todos.length>0&&v.todos.every(x=>x.done);
+  // 3個達成ごとに宝（ゴール後のチェックでも有効）
+  let treasureShown=false;
+  if(t.done){
+    const doneCount=v.todos.filter(x=>x.done).length;
+    if(doneCount>=3*(v.todoRewards+1)){
+      v.todoRewards++;
+      save();
+      const letter=grantTreasure('todo');
+      showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`);
+      treasureShown=true;
+    }
+  }
+  // 無制限モード：チェックで船が前進（全完了時は全速力に任せる）
+  if(v.mode==='free'&&isActiveChart&&!allDone&&Math.abs(after-before)>0.01){
+    placeShip(before);
+    animateShipTo(before,after,1000,()=>{
+      if(after>before)checkIslandPass(v,before,after);
+      lastP=after;
+    });
+  }
+  // 全工程完了 → 全速力ゴール（入港前の航海のみ）
+  if(allDone&&!v.archived){
+    setTimeout(()=>fullSpeedFinish(v,before),treasureShown?250:450);
+  }
+}
+function deleteTodo(id){
+  const v=nbVoyage();if(!v)return;
+  v.todos=v.todos.filter(t=>t.id!==id);
+  save();
+  render();
+}
+
+/* ================= Treasure ================= */
+function grantTreasure(source){
+  const letter=String.fromCharCode(65+Math.floor(Math.random()*26));
+  state.treasures.push({id:uid(),letter,ts:Date.now(),source});
+  save();
+  return letter;
+}
+function showTreasure(letter,msg){
+  document.getElementById('tLetter').textContent=letter;
+  document.getElementById('tMsg').innerHTML=`${esc(msg)}<br>宝『<b>${letter}</b>』を手に入れた！`;
+  SE.treasure();
+  document.getElementById('treasureModal').classList.add('open');
+}
+
+/* ================= Full speed finish ================= */
+function fullSpeedFinish(v,fromPOverride){
+  if(finishing||v.archived)return;
+  finishing=true;
+  toggleNotebook(false);
+  if(v.sailing)anchorShip(v,true);
+  const fromP=fromPOverride!=null?fromPOverride:progressOf(v);
+  const frame=document.getElementById('chartFrame');
+  if(frame){
+    const b=document.createElement('div');
+    b.className='fullspeed-banner';
+    b.textContent='全 速 前 進 ！';
+    frame.appendChild(b);
+    setTimeout(()=>b.remove(),3400);
+  }
+  const spray=document.getElementById('fsSpray');
+  if(spray)spray.style.display='';
+  SE.fullspeed();
+  const path=document.getElementById('routePath');
+  const ship=document.getElementById('ship');
+  const wake=document.getElementById('wake');
+  const fill=document.getElementById('pFill');
+  const pct=document.getElementById('pctNum');
+  const dur=3000,t0=performance.now();
+  function frameFn(now){
+    const t=Math.min(1,(now-t0)/dur);
+    const e=t<.4?(t/.4)*(t/.4)*.25:.25+((t-.4)/.6)*.75;
+    const p=fromP+(100-fromP)*e;
+    if(path&&ship){
+      const{x,y,ang}=shipPoint(path,p);
+      ship.setAttribute('transform',`translate(${x},${y}) rotate(${ang})`);
+    }
+    if(wake)wake.setAttribute('stroke-dasharray',`${p} 100`);
+    if(fill)fill.style.width=p+'%';
+    if(pct)pct.textContent=p.toFixed(1);
+    if(t<1)requestAnimationFrame(frameFn);
+    else{
+      if(spray)spray.style.display='none';
+      finishing=false;
+      arrive(v,true);
+    }
+  }
+  requestAnimationFrame(frameFn);
+}
+
+/* ================= Arrival ================= */
+function arrive(v,fullSpeed){
+  SE.arrive();
+  closeModal('treasureModal');
+  const letter=grantTreasure('goal');
+  document.getElementById('arrivalFlag').textContent=fullSpeed?'🚩':'⚓';
+  document.getElementById('arrivalTitle').textContent=fullSpeed?'全工程踏破・入港':'入 港';
+  document.getElementById('arrivalMsg').textContent=fullSpeed
+    ?`全ての工程を終え、「${v.name}」号は全速力で ${v.goal} に入港！ 総航行 ${fmtDur(v.accumMs)}・出航${v.sessions.length}回の航海でした。`
+    :`「${v.name}」号、${v.goal} に到着。総航行 ${fmtDur(v.accumMs)}・出航${v.sessions.length}回の航海でした。`;
+  document.getElementById('lootLetter').textContent=letter;
+  document.getElementById('arrivalLoot').style.display='flex';
+  setTimeout(()=>SE.treasure(),1600);
+  const box=document.getElementById('arrival');
+  box.classList.add('open');
+  const colors=['#C2418C','#C9A85C','#F4EFE2','#BFDDE8','#D77BB2'];
+  for(let i=0;i<50;i++){
+    const c=document.createElement('div');
+    c.className='confetti';
+    c.style.left=Math.random()*100+'vw';
+    c.style.background=colors[i%colors.length];
+    c.style.animationDuration=(2.2+Math.random()*2)+'s';
+    c.style.animationDelay=(Math.random()*.8)+'s';
+    box.appendChild(c);
+    setTimeout(()=>c.remove(),5500);
+  }
+  box.dataset.vid=v.id;
+}
+function closeArrival(){
+  const box=document.getElementById('arrival');
+  const v=state.voyages.find(x=>x.id===box.dataset.vid);
+  if(v){v.archived=true;v.archivedAt=Date.now();}
+  if(state.activeId===box.dataset.vid)state.activeId=null;
+  box.classList.remove('open');
+  render();
+}
+
+/* ================= Import / Export ================= */
+function exportData(){
+  const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  const d=new Date();
+  a.download=`voyage-log_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+  a.click();URL.revokeObjectURL(a.href);
+}
+function importData(ev){
+  const f=ev.target.files[0];if(!f)return;
+  const rd=new FileReader();
+  rd.onload=()=>{
+    try{
+      const data=JSON.parse(rd.result);
+      if(!Array.isArray(data.voyages))throw 0;
+      if(!confirm('現在のデータを読み込んだ内容で置き換えます。よろしいですか？'))return;
+      state=data;
+      if(!state.treasures)state.treasures=[];
+      if(!state.view)state.view='chart';
+      state.voyages.forEach(normalizeVoyage);
+      render();
+    }catch(e){alert('読み込めませんでした。ファイル形式を確認してください。');}
+  };
+  rd.readAsText(f);
+  ev.target.value='';
+}
+
+document.querySelectorAll('.modal-bg').forEach(m=>{
+  m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('open');});
+});
+
+load();render();
+</script>
+</body>
+</html>
