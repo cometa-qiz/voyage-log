@@ -40,22 +40,22 @@
 **ゴール: Googleサインイン・未認証リダイレクトが動く**
 
 ### Firebaseプロジェクト
-- [ ] 新しいFirebaseプロジェクトを作成する（Yggd-memo・ハビットトラッカーとは別）
-- [ ] Authentication（Google Sign-in）を有効化する
-- [ ] Firestoreを有効化する（本番モード）
-- [ ] `firestore.rules` を `docs/requirements.md` セクション6の定義通りに作成しデプロイする
-- [ ] `.env.local` にFirebase設定値を記入する（コミットしない）
+- [x] 新しいFirebaseプロジェクトを作成する（Yggd-memo・ハビットトラッカーとは別）
+- [x] Authentication（Google Sign-in）を有効化する
+- [x] Firestoreを有効化する（本番モード）
+- [x] `firestore.rules` を `docs/requirements.md` セクション6の定義通りに作成しデプロイする
+- [x] `.env.local` にFirebase設定値を記入する（コミットしない）
 
 ### 実装
-- [ ] `src/lib/firebase.ts` を実装する（初期化・auth/dbのエクスポート）
-- [ ] `src/app/login/page.tsx` を実装する（Googleサインインボタン）
-- [ ] `AuthGuard.tsx`（Client Component）を実装し `layout.tsx` から呼び出す（`/login` はリダイレクト対象から除外）
-- [ ] サインアウト処理を実装する（ヘッダーから呼べる）
+- [x] `src/lib/firebase.ts` を実装する（初期化・auth/dbのエクスポート）
+- [x] `src/app/login/page.tsx` を実装する（Googleサインインボタン）
+- [x] `AuthGuard.tsx`（Client Component）を実装し `layout.tsx` から呼び出す（`/login` はリダイレクト対象から除外）
+- [x] サインアウト処理を実装する（ヘッダーから呼べる）
 
 ### ✅ 完了確認
-- [ ] サインイン→アプリ表示、サインアウト→`/login` へ遷移する
-- [ ] 未認証で保護ページにアクセスすると `/login` へリダイレクトされる
-- [ ] セキュリティルールにより自分のuid配下しか読み書きできない
+- [x] サインイン→アプリ表示、サインアウト→`/login` へ遷移する
+- [x] 未認証で保護ページにアクセスすると `/login` へリダイレクトされる
+- [ ] セキュリティルールにより自分のuid配下しか読み書きできない（Phase 2でuseVoyages実装後、実データでの読み書き制限を確認する）
 
 ---
 
