@@ -25,7 +25,7 @@
 ### ドキュメント配置
 - [x] `docs/requirements.md` / `docs/constraints.md` / `docs/status.md`（本ファイル）/ `docs/agent_prompt.md` / `docs/voyage-log.html` を配置する
 - [x] `AGENTS.md` / `CONTRIBUTING.md` を配置する（作成済みのものをそのまま使用。内容を書き換えない）
-- [ ] `.env.example` を作成する（`NEXT_PUBLIC_FIREBASE_*` 6項目）
+- [x] `.env.example` を作成する（`NEXT_PUBLIC_FIREBASE_*` 6項目）
 
 ### ✅ 完了確認
 - [ ] `pnpm dev` で初期画面が表示される
