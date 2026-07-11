@@ -24,7 +24,8 @@ export default function AuthGuard({
     });
   }, []);
 
-  const isPublicPath = PUBLIC_PATHS.includes(pathname);
+  const normalizedPathname = pathname.replace(/\/+$/, "") || "/";
+  const isPublicPath = PUBLIC_PATHS.includes(normalizedPathname);
 
   useEffect(() => {
     if (!isLoading && !user && !isPublicPath) {
