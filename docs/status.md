@@ -64,20 +64,20 @@
 **ゴール: 型・計算ロジック・Firestoreフックが揃い、テストデータの読み書きができる**
 
 ### 型・定数・ロジック（`src/lib/`）
-- [ ] `types.ts`: `Voyage` / `Session` / `LogEntry` / `Todo` / `Treasure` を要件定義書4.1の通り定義する（`isActive` / `schemaVersion: 5` を含む。`sessBreakMs: 0` / `pomo: null` は予約フィールド）
-- [ ] `routes.ts`: `ROUTES`（3航路のpath・start/end・ゴール島座標・応援ゾーン）をプロトタイプから**数値を変えずに**移植する
-- [ ] `progress.ts`: `elapsedMs()` / `progressOf()`（time / free / archivedの3分岐）/ `fmtDur()` / `fmtClock()` / `fmtDate()` を移植する
-- [ ] `normalize.ts`: `normalizeVoyage()`（欠損フィールドの補完・schemaVersion管理）を実装する
+- [x] `types.ts`: `Voyage` / `Session` / `LogEntry` / `Todo` / `Treasure` を要件定義書4.1の通り定義する（`isActive` / `schemaVersion: 5` を含む。`sessBreakMs: 0` / `pomo: null` は予約フィールド）
+- [x] `routes.ts`: `ROUTES`（3航路のpath・start/end・ゴール島座標・応援ゾーン）をプロトタイプから**数値を変えずに**移植する
+- [x] `progress.ts`: `elapsedMs()` / `progressOf()`（time / free / archivedの3分岐）/ `fmtDur()` / `fmtClock()` / `fmtDate()` を移植する
+- [x] `normalize.ts`: `normalizeVoyage()`（欠損フィールドの補完・schemaVersion管理）を実装する
 
 ### Firestoreフック（`src/hooks/`）
-- [ ] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
-- [ ] `useTreasures`: `users/{uid}/treasures` の購読と**追記のみ**の関数を実装する
-- [ ] ローカル設定（`activeId` / `view` / `muted` / `dockOpen`）をlocalStorageで管理するフックを実装する（Firestoreに保存しない）
+- [x] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
+- [x] `useTreasures`: `users/{uid}/treasures` の購読と**追記のみ**の関数を実装する
+- [x] ローカル設定（`activeId` / `view` / `muted` / `dockOpen`）をlocalStorageで管理するフックを実装する（Firestoreに保存しない）
 
 ### ✅ 完了確認
-- [ ] 開発用の仮ページから航路を作成→Firestoreコンソールに反映→`onSnapshot`で画面に反映される
-- [ ] 論理削除した航路が一覧から消える（ドキュメント自体は残っている）
-- [ ] `progressOf()` の3分岐（時間目標・無制限・アーカイブ済み）が仕様通りの値を返す
+- [x] 開発用の仮ページから航路を作成→Firestoreコンソールに反映→`onSnapshot`で画面に反映される
+- [x] 論理削除した航路が一覧から消える（ドキュメント自体は残っている）
+- [x] `progressOf()` の3分岐（時間目標・無制限・アーカイブ済み）が仕様通りの値を返す
 
 ---
 
