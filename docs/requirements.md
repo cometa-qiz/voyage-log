@@ -378,10 +378,9 @@ service cloud.firestore {
 
 ```
 voyage-log/
-├── public/
-│   └── favicon.ico
+├── public/                     # （favicon.icoはsrc/app/に配置するため現時点では未使用）
 ├── src/
-│   ├── app/                    # App Router（layout / page / login）
+│   ├── app/                    # App Router（layout / page / login / favicon.ico）
 │   ├── components/             # Chart / Ship / TodoDock / Notebook / Modals / Collection 等
 │   ├── hooks/                  # useVoyages / useTreasures / useAmbience / useSound 等
 │   └── lib/                    # firebase初期化 / 進捗計算 / 航路定義（ROUTES）/ SE合成

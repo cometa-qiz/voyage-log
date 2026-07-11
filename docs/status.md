@@ -18,7 +18,7 @@
 
 ### リポジトリ・雛形
 - [x] GitHubリポジトリ `voyage-log` を作成する（mainへの直接コミット禁止運用）
-- [ ] `pnpm create next-app` でプロジェクトを作成する（TypeScript / App Router / Tailwind CSS / `src/` ディレクトリ）
+- [x] `pnpm create next-app` でプロジェクトを作成する（TypeScript / App Router / Tailwind CSS / `src/` ディレクトリ）
 - [ ] `next.config.ts` に `output: 'export'` / `trailingSlash: true` / `images.unoptimized: true` を設定する
 - [ ] `.gitignore` に `.env*` / `out/` / `node_modules/` が含まれていることを確認する
 
