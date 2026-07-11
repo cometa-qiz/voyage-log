@@ -67,7 +67,7 @@
 - [x] `types.ts`: `Voyage` / `Session` / `LogEntry` / `Todo` / `Treasure` を要件定義書4.1の通り定義する（`isActive` / `schemaVersion: 5` を含む。`sessBreakMs: 0` / `pomo: null` は予約フィールド）
 - [x] `routes.ts`: `ROUTES`（3航路のpath・start/end・ゴール島座標・応援ゾーン）をプロトタイプから**数値を変えずに**移植する
 - [x] `progress.ts`: `elapsedMs()` / `progressOf()`（time / free / archivedの3分岐）/ `fmtDur()` / `fmtClock()` / `fmtDate()` を移植する
-- [ ] `normalize.ts`: `normalizeVoyage()`（欠損フィールドの補完・schemaVersion管理）を実装する
+- [x] `normalize.ts`: `normalizeVoyage()`（欠損フィールドの補完・schemaVersion管理）を実装する
 
 ### Firestoreフック（`src/hooks/`）
 - [ ] `useVoyages`: `users/{uid}/voyages` の `onSnapshot` 購読（`isActive: true` のみ）、作成・更新・論理削除（`isActive: false`）を実装する
