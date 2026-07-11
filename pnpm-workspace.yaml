@@ -3,5 +3,7 @@ onlyBuiltDependencies:
 ignoredBuiltDependencies:
   - sharp
 allowBuilds:
+  '@firebase/util': true
+  protobufjs: true
   sharp: false
   unrs-resolver: true
