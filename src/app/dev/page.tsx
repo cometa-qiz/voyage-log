@@ -12,6 +12,7 @@ import { useState } from "react";
 import { useVoyages } from "@/hooks/useVoyages";
 import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
+import { Chart } from "@/components/Chart/Chart";
 
 function sampleVoyage(overrides: Partial<Voyage>): Voyage {
   return {
@@ -105,6 +106,13 @@ export default function DevPage() {
           5で正式な航路管理UIが実装され次第削除します。
         </p>
       </div>
+
+      <section className="flex flex-col gap-3">
+        <h2 className="font-semibold text-black dark:text-zinc-50">
+          Chart 背景レイヤー動作確認（Phase 3）
+        </h2>
+        <Chart />
+      </section>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-semibold text-black dark:text-zinc-50">
