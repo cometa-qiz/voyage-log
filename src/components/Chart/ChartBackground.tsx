@@ -40,9 +40,12 @@ const REEF_POINTS: [number, number][] = [
   [868, 138],
 ];
 
-export function ChartBackground() {
+// ゴール島（GoalIsland）を挟む都合上、chart-bg内の描画順を保つため
+// 固定装飾を「ゴール島より手前」「ゴール島より奥」の2つに分けている。
+// 外枠の <g class="chart-bg"> はChart.tsx側で1つにまとめて描画する。
+export function ChartBackgroundBase() {
   return (
-    <g className="chart-bg">
+    <>
       <rect width={1000} height={620} fill="url(#sea)" />
 
       <g stroke="#8FB4C4" strokeWidth={0.6} opacity={0.35}>
@@ -135,7 +138,13 @@ export function ChartBackground() {
           </text>
         </g>
       </g>
+    </>
+  );
+}
 
+export function ChartBackgroundOverlay() {
+  return (
+    <>
       <g transform="translate(786,404)">
         <rect x={-4} y={-20} width={8} height={20} fill="#C2418C" />
         <rect x={-6} y={-24} width={12} height={5} fill="#2E3B45" />
@@ -192,6 +201,6 @@ export function ChartBackground() {
           N
         </text>
       </g>
-    </g>
+    </>
   );
 }

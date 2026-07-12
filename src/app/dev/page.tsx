@@ -41,6 +41,14 @@ function sampleVoyage(overrides: Partial<Voyage>): Voyage {
   };
 }
 
+const chartPreviewVoyage = sampleVoyage({
+  name: "Chart確認用航路",
+  goal: "確認ゴール島",
+  mode: "time",
+  targetMinutes: 60,
+  routeIndex: 0,
+});
+
 const progressSamples = [
   {
     label: "時間目標モード（目標60分・経過30分）",
@@ -111,7 +119,7 @@ export default function DevPage() {
         <h2 className="font-semibold text-black dark:text-zinc-50">
           Chart 背景レイヤー動作確認（Phase 3）
         </h2>
-        <Chart />
+        <Chart voyage={chartPreviewVoyage} />
       </section>
 
       <section className="flex flex-col gap-3">

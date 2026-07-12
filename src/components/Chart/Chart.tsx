@@ -1,6 +1,11 @@
-import { ChartBackground } from "./ChartBackground";
+import { ChartBackgroundBase, ChartBackgroundOverlay } from "./ChartBackground";
+import { GoalIsland } from "./GoalIsland";
+import { ROUTES } from "@/lib/routes";
+import type { Voyage } from "@/lib/types";
 
-export function Chart() {
+export function Chart({ voyage }: { voyage: Voyage }) {
+  const route = ROUTES[voyage.routeIndex % ROUTES.length];
+
   return (
     <div className="chart-panel">
       <div className="chart-frame">
@@ -15,7 +20,11 @@ export function Chart() {
               <stop offset="1" stopColor="rgba(255,238,170,0)" />
             </radialGradient>
           </defs>
-          <ChartBackground />
+          <g className="chart-bg">
+            <ChartBackgroundBase />
+            <GoalIsland route={route} />
+            <ChartBackgroundOverlay />
+          </g>
         </svg>
       </div>
     </div>
