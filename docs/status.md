@@ -127,7 +127,7 @@
 - [x] 航路の破棄を実装する（確認ダイアログ→論理削除）
 
 ### 出航／停泊・時間計測
-- [ ] 出航（`sailing: true, sailStart: now`）／停泊（`accumMs`確定・`sessions`追記・自動記帳）を実装する
+- [x] 出航（`sailing: true, sailStart: now`）／停泊（`accumMs`確定・`sessions`追記・自動記帳）を実装する
 - [ ] 経過時間計算 `elapsedMs = accumMs + (sailing ? now - sailStart : 0)` で進捗を算出する（**秒加算方式に書き換えない**）
 - [ ] 航行中の毎秒更新を実装する（進捗%・航行距離・航跡・船位置・航行タイマー。**クライアント計算のみでFirestoreに書き込まない**。React再レンダーを最小化する）
 
