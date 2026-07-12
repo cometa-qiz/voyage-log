@@ -1,8 +1,17 @@
+import type { RefObject } from "react";
 import type { Route } from "@/lib/routes";
 
 // 航路パス（未踏区間の点線・通過済みのwake実線・船位置計算用の非表示routePath）。
 // docs/voyage-log.html の chartSVG() 内、母港/目的地マーク直後の3本のpathを移植。
-export function RoutePath({ route, progress }: { route: Route; progress: number }) {
+export function RoutePath({
+  route,
+  progress,
+  routePathRef,
+}: {
+  route: Route;
+  progress: number;
+  routePathRef?: RefObject<SVGPathElement | null>;
+}) {
   return (
     <>
       <path
@@ -23,7 +32,7 @@ export function RoutePath({ route, progress }: { route: Route; progress: number 
         strokeDasharray={`${progress} 100`}
         strokeLinecap="round"
       />
-      <path id="routePath" d={route.d} fill="none" stroke="none" />
+      <path id="routePath" ref={routePathRef} d={route.d} fill="none" stroke="none" />
     </>
   );
 }

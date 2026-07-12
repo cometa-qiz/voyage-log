@@ -1,7 +1,11 @@
+"use client";
+
+import { useRef } from "react";
 import { ChartBackgroundBase, ChartBackgroundOverlay } from "./ChartBackground";
 import { GoalIsland } from "./GoalIsland";
 import { PortMarkers } from "./PortMarkers";
 import { RoutePath } from "./RoutePath";
+import { Ship } from "@/components/Ship/Ship";
 import { ROUTES } from "@/lib/routes";
 import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
@@ -9,6 +13,7 @@ import type { Voyage } from "@/lib/types";
 export function Chart({ voyage }: { voyage: Voyage }) {
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
   const progress = progressOf(voyage);
+  const routePathRef = useRef<SVGPathElement>(null);
 
   return (
     <div className="chart-panel">
@@ -29,8 +34,9 @@ export function Chart({ voyage }: { voyage: Voyage }) {
             <GoalIsland route={route} />
             <ChartBackgroundOverlay />
             <PortMarkers route={route} goal={voyage.goal} />
-            <RoutePath route={route} progress={progress} />
+            <RoutePath route={route} progress={progress} routePathRef={routePathRef} />
           </g>
+          <Ship routePathRef={routePathRef} route={route} progress={progress} />
         </svg>
       </div>
     </div>
