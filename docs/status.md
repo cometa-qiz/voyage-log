@@ -106,7 +106,7 @@
 
 ### デプロイ設定
 - [x] `pnpm add -D firebase-tools` で導入する
-- [ ] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
+- [x] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
 - [ ] `firebase init hosting` を実行し `firebase.json` の `public` が `"out"` になっていることを確認する
 - [ ] `pnpm build` → `pnpm deploy` でデプロイする
 
