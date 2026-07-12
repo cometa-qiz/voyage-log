@@ -47,3 +47,21 @@ body {
 .chart-bg {
   transition: filter 1.5s ease;
 }
+
+/* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
+.sailing-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #6fcf97;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
+}
