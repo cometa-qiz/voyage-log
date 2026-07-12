@@ -105,15 +105,15 @@
 **ゴール: 公開URLでログイン〜海図表示まで動き、いつでもスマホ実機確認できる**
 
 ### デプロイ設定
-- [ ] `pnpm add -D firebase-tools` で導入する
-- [ ] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
-- [ ] `firebase init hosting` を実行し `firebase.json` の `public` が `"out"` になっていることを確認する
+- [x] `pnpm add -D firebase-tools` で導入する
+- [x] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
+- [x] `firebase init hosting` を実行し `firebase.json` の `public` が `"out"` になっていることを確認する
 - [ ] `pnpm build` → `pnpm deploy` でデプロイする
 
 ### ✅ 完了確認
-- [ ] 公開URLでGoogleサインイン→海図（ダミー航路）が表示される
-- [ ] スマホ実機で公開URLにアクセスし表示を確認した
-- [ ] **以降、各Phase完了時のデプロイ確認を運用に組み込んだ**
+- [x] 公開URLでGoogleサインイン→海図（ダミー航路）が表示される
+- [x] スマホ実機で公開URLにアクセスし表示を確認した
+- [x] **以降、各Phase完了時のデプロイ確認を運用に組み込んだ**
 
 ---
 
