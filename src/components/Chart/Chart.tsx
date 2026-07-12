@@ -1,10 +1,13 @@
 import { ChartBackgroundBase, ChartBackgroundOverlay } from "./ChartBackground";
 import { GoalIsland } from "./GoalIsland";
+import { RoutePath } from "./RoutePath";
 import { ROUTES } from "@/lib/routes";
+import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
 export function Chart({ voyage }: { voyage: Voyage }) {
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
+  const progress = progressOf(voyage);
 
   return (
     <div className="chart-panel">
@@ -24,6 +27,12 @@ export function Chart({ voyage }: { voyage: Voyage }) {
             <ChartBackgroundBase />
             <GoalIsland route={route} />
             <ChartBackgroundOverlay />
+            {/*
+              次タスク（母港マーク・目的地マーク・目的地名ラベル）は、
+              プロトタイプの描画順（母港/目的地マーク → 航路パス3本）に合わせて
+              このコメントの位置（RoutePathより前＝画面上では奥）に挿入すること。
+            */}
+            <RoutePath route={route} progress={progress} />
           </g>
         </svg>
       </div>
