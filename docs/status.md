@@ -105,7 +105,7 @@
 **ゴール: 公開URLでログイン〜海図表示まで動き、いつでもスマホ実機確認できる**
 
 ### デプロイ設定
-- [ ] `pnpm add -D firebase-tools` で導入する
+- [x] `pnpm add -D firebase-tools` で導入する
 - [ ] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
 - [ ] `firebase init hosting` を実行し `firebase.json` の `public` が `"out"` になっていることを確認する
 - [ ] `pnpm build` → `pnpm deploy` でデプロイする
