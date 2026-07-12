@@ -5,7 +5,7 @@ import { useVoyages } from "@/hooks/useVoyages";
 import { useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { TabBar } from "@/components/TabBar";
-import { Chart } from "@/components/Chart/Chart";
+import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtDur, progressOf } from "@/lib/progress";
@@ -98,25 +98,12 @@ export default function Home() {
             宝物庫（図鑑グリッド表示はPhase 7で実装します）
           </p>
         ) : activeVoyage ? (
-          <>
-            <Chart voyage={activeVoyage} />
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={handleToggleSail}
-                className="w-fit rounded-full bg-foreground px-5 py-2 text-sm text-background"
-              >
-                {activeVoyage.sailing ? "⚓ 停泊する" : "⛵ 出航する"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsDiscardConfirmOpen(true)}
-                className="w-fit rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
-              >
-                破棄
-              </button>
-            </div>
-          </>
+          <VoyagePanel
+            key={activeVoyage.id}
+            voyage={activeVoyage}
+            onToggleSail={handleToggleSail}
+            onDiscard={() => setIsDiscardConfirmOpen(true)}
+          />
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             航路がありません。「＋ 新しい航路」から作成してください。
