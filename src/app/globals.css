@@ -24,3 +24,26 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* ---------- Chart panel（docs/voyage-log.html .chart-panel/.chart-frame を移植） ---------- */
+.chart-panel {
+  background: #17293a;
+  border: 1px solid rgba(201, 168, 92, 0.3);
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+.chart-frame {
+  position: relative;
+  border-radius: 6px;
+  overflow: hidden;
+  border: 1px solid rgba(46, 59, 69, 0.5);
+}
+.chart-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.chart-bg {
+  transition: filter 1.5s ease;
+}
