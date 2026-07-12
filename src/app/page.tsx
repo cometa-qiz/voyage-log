@@ -7,6 +7,7 @@ import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { TabBar } from "@/components/TabBar";
 import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
+import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { fmtDur, progressOf } from "@/lib/progress";
 
@@ -21,6 +22,7 @@ export default function Home() {
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
@@ -77,6 +79,24 @@ export default function Home() {
     }
   };
 
+  // addNote()を移植。posは送信時点の最新progressOf(activeVoyage)で計算する
+  // （モーダルを開いた時点の値を使い回さない）。
+  const handleAddNote = async (note: string) => {
+    if (!activeVoyage) return;
+    await updateVoyage(activeVoyage.id, {
+      logs: [
+        ...activeVoyage.logs,
+        {
+          id: genId(),
+          ts: Date.now(),
+          note,
+          pos: progressOf(activeVoyage),
+          sys: false,
+        },
+      ],
+    });
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <TabBar
@@ -102,6 +122,7 @@ export default function Home() {
             key={activeVoyage.id}
             voyage={activeVoyage}
             onToggleSail={handleToggleSail}
+            onOpenNote={() => setIsNoteModalOpen(true)}
             onDiscard={() => setIsDiscardConfirmOpen(true)}
           />
         ) : (
@@ -115,6 +136,14 @@ export default function Home() {
         <NewVoyageModal
           onClose={() => setIsNewVoyageModalOpen(false)}
           onCreate={createVoyage}
+        />
+      )}
+
+      {isNoteModalOpen && activeVoyage && (
+        <NoteModal
+          voyage={activeVoyage}
+          onClose={() => setIsNoteModalOpen(false)}
+          onSubmit={handleAddNote}
         />
       )}
 

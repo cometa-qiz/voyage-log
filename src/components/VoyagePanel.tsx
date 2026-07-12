@@ -31,10 +31,12 @@ function sailingClockMs(voyage: Voyage): number {
 export function VoyagePanel({
   voyage,
   onToggleSail,
+  onOpenNote,
   onDiscard,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
+  onOpenNote: () => void;
   onDiscard: () => void;
 }) {
   const [, setTick] = useState(0);
@@ -81,6 +83,13 @@ export function VoyagePanel({
           className="w-fit rounded-full bg-foreground px-5 py-2 text-sm text-background"
         >
           {voyage.sailing ? "⚓ 停泊する" : "⛵ 出航する"}
+        </button>
+        <button
+          type="button"
+          onClick={onOpenNote}
+          className="w-fit rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
+        >
+          ✎ 記帳する
         </button>
         <button
           type="button"
