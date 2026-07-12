@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Chart } from "@/components/Chart/Chart";
 import { LogList } from "@/components/LogList";
 import { elapsedMs, fmtClock, fmtDur, progressOf } from "@/lib/progress";
@@ -28,19 +28,21 @@ function sailingClockMs(voyage: Voyage): number {
 // Firestoreへの書き込みは行わず、tick用stateをこのコンポーネント内に閉じ込めることで、
 // 毎秒の再レンダーをこの航路パネルのサブツリー（Chart含む）だけに限定する
 // （タブバー・モーダル・page.tsx本体は再レンダーされない）。
-// 除外: updatePomoBadge/checkIslandPass（Phase 8）、p>=100での自動入港（別タスク）、SE。
+// 除外: updatePomoBadge/checkIslandPass（Phase 8）、無制限モードの全工程完了入港（Phase 6）、SE。
 export function VoyagePanel({
   voyage,
   onToggleSail,
   onOpenNote,
   onDiscard,
   onDeleteLog,
+  onArrive,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
   onOpenNote: () => void;
   onDiscard: () => void;
   onDeleteLog: (logId: string) => Promise<void>;
+  onArrive: () => void;
 }) {
   const [, setTick] = useState(0);
 
@@ -51,6 +53,22 @@ export function VoyagePanel({
   }, [voyage.id, voyage.sailing]);
 
   const progress = progressOf(voyage);
+
+  // updateLive()内 `if(v.mode!=='free'&&v.sailing&&p>=100){anchorShip(v,true);arrive(v,false);}` を移植。
+  // 時間目標モードのみが対象（無制限モードの全工程完了入港は別タスク）。
+  // Firestoreへの書き込みは非同期のため、書き込み完了前の次のtickで同じ条件を
+  // 再検知して二重にonArrive()を呼ばないよう、arrivedRefで一度だけ発火させる
+  // （プロトタイプのfinishingフラグに相当する簡易ガード）。
+  const arrivedRef = useRef(false);
+
+  useEffect(() => {
+    if (voyage.mode === "free") return;
+    if (!voyage.sailing) return;
+    if (progress < 100) return;
+    if (arrivedRef.current) return;
+    arrivedRef.current = true;
+    onArrive();
+  }, [voyage.mode, voyage.sailing, progress, onArrive]);
 
   return (
     <>
