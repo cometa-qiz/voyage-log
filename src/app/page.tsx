@@ -97,6 +97,15 @@ export default function Home() {
     });
   };
 
+  // deleteLog()を移植。constraints.mdの論理削除ルールはvoyageドキュメント単位の話であり、
+  // logs配列内の要素をfilterで除去すること自体は問題ない。
+  const handleDeleteLog = async (logId: string) => {
+    if (!activeVoyage) return;
+    await updateVoyage(activeVoyage.id, {
+      logs: activeVoyage.logs.filter((log) => log.id !== logId),
+    });
+  };
+
   return (
     <div className="flex flex-1 flex-col">
       <TabBar
@@ -124,6 +133,7 @@ export default function Home() {
             onToggleSail={handleToggleSail}
             onOpenNote={() => setIsNoteModalOpen(true)}
             onDiscard={() => setIsDiscardConfirmOpen(true)}
+            onDeleteLog={handleDeleteLog}
           />
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">

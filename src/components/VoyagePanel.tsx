@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Chart } from "@/components/Chart/Chart";
+import { LogList } from "@/components/LogList";
 import { elapsedMs, fmtClock, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -33,11 +34,13 @@ export function VoyagePanel({
   onToggleSail,
   onOpenNote,
   onDiscard,
+  onDeleteLog,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
   onOpenNote: () => void;
   onDiscard: () => void;
+  onDeleteLog: (logId: string) => Promise<void>;
 }) {
   const [, setTick] = useState(0);
 
@@ -98,6 +101,13 @@ export function VoyagePanel({
         >
           破棄
         </button>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <h3 className="text-sm font-semibold tracking-widest text-black dark:text-zinc-50">
+          航 海 日 誌
+        </h3>
+        <LogList logs={voyage.logs} onDeleteLog={onDeleteLog} />
       </div>
     </>
   );
