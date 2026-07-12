@@ -1,5 +1,6 @@
 import { ChartBackgroundBase, ChartBackgroundOverlay } from "./ChartBackground";
 import { GoalIsland } from "./GoalIsland";
+import { PortMarkers } from "./PortMarkers";
 import { RoutePath } from "./RoutePath";
 import { ROUTES } from "@/lib/routes";
 import { progressOf } from "@/lib/progress";
@@ -27,11 +28,7 @@ export function Chart({ voyage }: { voyage: Voyage }) {
             <ChartBackgroundBase />
             <GoalIsland route={route} />
             <ChartBackgroundOverlay />
-            {/*
-              次タスク（母港マーク・目的地マーク・目的地名ラベル）は、
-              プロトタイプの描画順（母港/目的地マーク → 航路パス3本）に合わせて
-              このコメントの位置（RoutePathより前＝画面上では奥）に挿入すること。
-            */}
+            <PortMarkers route={route} goal={voyage.goal} />
             <RoutePath route={route} progress={progress} />
           </g>
         </svg>
