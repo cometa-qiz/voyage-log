@@ -41,7 +41,7 @@ export default function Home() {
         onOpenNewVoyage={() => setIsNewVoyageModalOpen(true)}
       />
 
-      <main className="flex flex-1 flex-col gap-4 p-4">
+      <main className="mx-auto flex w-full max-w-[1060px] flex-1 flex-col gap-4 p-4">
         {view === "collection" ? (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
             宝物庫（図鑑グリッド表示はPhase 7で実装します）
