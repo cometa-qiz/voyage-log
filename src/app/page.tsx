@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useVoyages } from "@/hooks/useVoyages";
-import { useTreasures } from "@/hooks/useTreasures";
+import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { TabBar } from "@/components/TabBar";
 import { VoyagePanel } from "@/components/VoyagePanel";
@@ -11,6 +11,8 @@ import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
 import { TodoDock } from "@/components/TodoDock";
+import { TreasureModal } from "@/components/TreasureModal";
+import { TreasureCollection } from "@/components/TreasureCollection";
 import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -52,7 +54,7 @@ function buildAnchorUpdate(voyage: Voyage) {
 
 export default function Home() {
   const { voyages, createVoyage, updateVoyage, discardVoyage } = useVoyages();
-  const { treasures } = useTreasures();
+  const { treasures, grantTreasure } = useTreasures();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
@@ -65,7 +67,18 @@ export default function Home() {
     accumMs: number;
     sessionCount: number;
     fullSpeed: boolean;
+    lootLetter: string | null;
   } | null>(null);
+  const [treasureModal, setTreasureModal] = useState<{
+    letter: string;
+    achievedCount: number;
+  } | null>(null);
+  // nbVoyageId相当。手帳が「完了した航海」の📖ボタンから開かれている場合に
+  // 対象航路のidを保持する（null時はアクティブな航路に追従）。
+  const [notebookVoyageId, setNotebookVoyageId] = useState<string | null>(
+    null,
+  );
+  const [isNotebookOpen, setIsNotebookOpen] = useState(false);
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
   // （useVoyagesは既にisActive:trueのみ購読しているため、archivedのみ追加でフィルタする）
@@ -73,6 +86,19 @@ export default function Home() {
   const activeVoyage = activeVoyages.find((voyage) => voyage.id === activeId);
   // renderArchive()の `state.voyages.filter(v=>v.archived)` 相当
   const archivedVoyages = voyages.filter((voyage) => voyage.archived);
+
+  // nbVoyage()（1063〜1068行目）を移植。nbVoyageId（notebookVoyageId）が設定されて
+  // おり該当航路が見つかればそれを優先（archived含む全voyagesから検索）、
+  // 無ければアクティブな航路に追従する。render()内でcollection表示中は
+  // nbBtn自体を隠す（toggleNotebook(false)相当）仕様も反映し、view!=='chart'では常にnull。
+  const notebookVoyage =
+    view !== "chart"
+      ? null
+      : ((notebookVoyageId
+          ? voyages.find((voyage) => voyage.id === notebookVoyageId)
+          : undefined) ??
+        activeVoyage ??
+        null);
 
   // render()内の自動選択ロジック
   // `if(state.view==='chart'&&!activeVoyage()&&act.length)state.activeId=act[0].id;` を移植
@@ -123,27 +149,59 @@ export default function Home() {
     });
   };
 
-  // toggleTodo()の基本部分（1564〜1581行目）を移植。宝の付与（1585〜1596行目）・
+  // toggleTodo()の基本部分（1564〜1581行目）・工程宝の判定（1585〜1596行目）を移植。
+  // アーカイブ済み航海でも工程チェック・工程宝の獲得は有効なため、activeVoyageではなく
+  // notebookVoyage（手帳が表示している航路。nbVoyage()相当）を対象にする。
   // 無制限モードの船アニメーション前進（1597〜1604行目）・全工程完了時の入港は別タスク。
   const handleToggleTodo = async (todoId: string) => {
-    if (!activeVoyage) return;
-    const todo = activeVoyage.todos.find((t) => t.id === todoId);
+    if (!notebookVoyage) return;
+    const todo = notebookVoyage.todos.find((t) => t.id === todoId);
     if (!todo) return;
 
     if (!todo.done) {
-      const elapsedAtDone = elapsedMs(activeVoyage);
-      const updatedVoyage = {
-        ...activeVoyage,
-        todos: activeVoyage.todos.map((t) =>
-          t.id === todoId
-            ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
-            : t,
-        ),
-      };
-      await updateVoyage(activeVoyage.id, {
-        todos: updatedVoyage.todos,
+      const elapsedAtDone = elapsedMs(notebookVoyage);
+      const updatedTodos = notebookVoyage.todos.map((t) =>
+        t.id === todoId
+          ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
+          : t,
+      );
+      const updatedVoyage = { ...notebookVoyage, todos: updatedTodos };
+
+      // `doneCount>=3*(v.todoRewards+1)`（1589行目）を移植。
+      // チェック解除方向（elseブロック）ではこの判定自体を行わない
+      // （todoRewardsの減算はconstraints.md #12で禁止）。
+      const doneCount = updatedTodos.filter((t) => t.done).length;
+      const shouldGrantTreasure =
+        doneCount >= 3 * (notebookVoyage.todoRewards + 1);
+
+      // 宝獲得モーダルと入港モーダルの表示順序バグ（工程が3の倍数個の航路で
+      // 最後の1件をチェックすると、無制限モードの全工程完了検知がonSnapshotの
+      // ローカル楽観反映だけで即座にhandleArriveを呼ぶため、2回のFirestore書き込み
+      // （updateVoyage→grantTreasure）完了を待つ従来のsetTreasureModal呼び出しより
+      // 必ず先に走ってしまっていた）の修正。letterはMath.random()による同期計算
+      // （pickRandomLetter()）なのでawaitより前に確定でき、setTreasureModal(...)を
+      // ここで同期的に呼ぶことで、直後のupdateVoyage()を起点にVoyagePanel側の
+      // 入港検知effectが（別のレンダーサイクルで）handleArriveを呼ぶより確実に先に
+      // 実行される。実際にFirestoreへ保存するletterも同じ値を使う。
+      let treasureLetter: string | null = null;
+      if (shouldGrantTreasure) {
+        treasureLetter = pickRandomLetter();
+        // showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`)（1592〜1593行目）を移植。
+        // v.todoRewardsはgrantTreasure呼び出し前に++済みのため、こちらでは更新後の値
+        // （notebookVoyage.todoRewards + 1）を使う。
+        setTreasureModal({
+          letter: treasureLetter,
+          achievedCount: (notebookVoyage.todoRewards + 1) * 3,
+        });
+      }
+
+      await updateVoyage(notebookVoyage.id, {
+        todos: updatedTodos,
+        todoRewards: shouldGrantTreasure
+          ? notebookVoyage.todoRewards + 1
+          : notebookVoyage.todoRewards,
         logs: [
-          ...activeVoyage.logs,
+          ...notebookVoyage.logs,
           {
             id: genId(),
             ts: Date.now(),
@@ -153,9 +211,13 @@ export default function Home() {
           },
         ],
       });
+
+      if (treasureLetter) {
+        await grantTreasure("todo", treasureLetter);
+      }
     } else {
-      await updateVoyage(activeVoyage.id, {
-        todos: activeVoyage.todos.map((t) =>
+      await updateVoyage(notebookVoyage.id, {
+        todos: notebookVoyage.todos.map((t) =>
           t.id === todoId
             ? { ...t, done: false, doneAt: null, elapsedAtDone: null }
             : t,
@@ -164,14 +226,15 @@ export default function Home() {
     }
   };
 
-  // addTodo()（1551〜1563行目）を移植。SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
+  // addTodo()（1551〜1563行目）を移植。notebookVoyage（手帳が表示している航路）が対象。
+  // SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
   const handleAddTodo = async (text: string) => {
-    if (!activeVoyage) return;
+    if (!notebookVoyage) return;
     const trimmedText = text.trim();
     if (!trimmedText) return;
-    await updateVoyage(activeVoyage.id, {
+    await updateVoyage(notebookVoyage.id, {
       todos: [
-        ...activeVoyage.todos,
+        ...notebookVoyage.todos,
         {
           id: genId(),
           text: trimmedText,
@@ -183,12 +246,30 @@ export default function Home() {
     });
   };
 
-  // deleteTodo()（1610〜1615行目）を移植。確認ダイアログなし（プロトタイプもconfirm()を使わない）。
+  // deleteTodo()（1610〜1615行目）を移植。notebookVoyage（手帳が表示している航路）が対象。
+  // 確認ダイアログなし（プロトタイプもconfirm()を使わない）。
   const handleDeleteTodo = async (todoId: string) => {
-    if (!activeVoyage) return;
-    await updateVoyage(activeVoyage.id, {
-      todos: activeVoyage.todos.filter((t) => t.id !== todoId),
+    if (!notebookVoyage) return;
+    await updateVoyage(notebookVoyage.id, {
+      todos: notebookVoyage.todos.filter((t) => t.id !== todoId),
     });
+  };
+
+  // toggleNotebook(force)（1239〜1250行目）を移植。閉じたら
+  // `if(!open)nbVoyageId=null;`（1244行目）の通りnotebookVoyageIdをリセットし、
+  // アクティブな航路の表示に戻す。
+  const handleNotebookOpenChange = (open: boolean) => {
+    setIsNotebookOpen(open);
+    if (!open) {
+      setNotebookVoyageId(null);
+    }
+  };
+
+  // openNotebookFor(id)（1251〜1254行目）を移植。「完了した航海」の
+  // 「📖 工程 n/m」ボタンから、対象のアーカイブ済み航路を指定して手帳を開く。
+  const handleOpenNotebookFor = (voyageId: string) => {
+    setNotebookVoyageId(voyageId);
+    setIsNotebookOpen(true);
   };
 
   // arrive(v,fullSpeed)の骨格版。fullSpeed=falseは時間目標モードの100%到達、
@@ -196,9 +277,18 @@ export default function Home() {
   // fullSpeedFinish()冒頭の `if(v.sailing)anchorShip(v,true);`（1636行目）の通り、
   // 停泊確定（accumMs確定・sessions追記・自動記帳）は航行中の場合のみ行う
   // （時間目標モードの呼び出し元は必ずsailing:trueの状態で呼ばれるため、従来と同じ結果になる）。
-  // 全速前進アニメーション・入港宝の付与・紙吹雪・SEはPhase 7/8の別タスク。
+  // `const letter=grantTreasure('goal');`（arrive()内、1680行目）を移植。
+  // handleArrive自体はVoyagePanel側の二重発火防止ガード（arrivedRef/fullSpeedArrivedRef、
+  // およびarchived:trueの航路にはVoyagePanelがそもそもマウントされない構造）により
+  // 1回の入港につき1回しか呼ばれないため、ここで再付与防止のガードを重複して
+  // 持つ必要はない。全速前進アニメーション・紙吹雪・SEはPhase 7/8の別タスク。
   const handleArrive = async (fullSpeed: boolean) => {
     if (!activeVoyage) return;
+    // arrive()冒頭の `closeModal('treasureModal');`（1679行目）を移植。
+    // 工程が3の倍数個の航路で最後の1件をチェックすると、工程宝獲得と全工程完了入港が
+    // 同一操作内で同時に発生しうる。入港処理を優先し、開いていた工程宝獲得モーダルは
+    // 強制的に閉じる。
+    setTreasureModal(null);
     let accumMs = activeVoyage.accumMs;
     let sessionCount = activeVoyage.sessions.length;
     if (activeVoyage.sailing) {
@@ -207,6 +297,7 @@ export default function Home() {
       accumMs = built.accumMs;
       sessionCount = activeVoyage.sessions.length + 1;
     }
+    const treasure = await grantTreasure("goal");
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
@@ -214,6 +305,7 @@ export default function Home() {
       accumMs,
       sessionCount,
       fullSpeed,
+      lootLetter: treasure?.letter ?? null,
     });
   };
 
@@ -240,15 +332,20 @@ export default function Home() {
           setView("chart");
           setActiveId(id);
         }}
-        onSelectCollection={() => setView("collection")}
+        onSelectCollection={() => {
+          setView("collection");
+          // render()内 `if(state.view==='collection'){nbBtn.style.display='none';
+          // ...toggleNotebook(false);}`（1092〜1095行目）を移植。宝物庫表示中は
+          // 手帳を閉じ、開いていたアーカイブ済み航路の指定もリセットする。
+          setIsNotebookOpen(false);
+          setNotebookVoyageId(null);
+        }}
         onOpenNewVoyage={() => setIsNewVoyageModalOpen(true)}
       />
 
       <main className="mx-auto flex w-full max-w-[1060px] flex-1 flex-col gap-4 p-4">
         {view === "collection" ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            宝物庫（図鑑グリッド表示はPhase 7で実装します）
-          </p>
+          <TreasureCollection treasures={treasures} />
         ) : activeVoyage ? (
           <VoyagePanel
             key={activeVoyage.id}
@@ -285,6 +382,16 @@ export default function Home() {
                     {voyage.sessions.length}回 ／{" "}
                     {fmtDate(voyage.archivedAt ?? voyage.createdAt)} 入港
                   </span>
+                  {voyage.todos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenNotebookFor(voyage.id)}
+                      className="rounded-full border border-black/[.08] px-3 py-1 text-xs dark:border-white/[.145]"
+                    >
+                      📖 工程 {voyage.todos.filter((t) => t.done).length}/
+                      {voyage.todos.length}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -295,7 +402,10 @@ export default function Home() {
       <TodoDock voyage={view === "chart" ? (activeVoyage ?? null) : null} />
 
       <Notebook
-        voyage={view === "chart" ? (activeVoyage ?? null) : null}
+        voyage={notebookVoyage}
+        badgeCount={activeVoyage ? activeVoyage.todos.filter((t) => !t.done).length : 0}
+        isOpen={isNotebookOpen}
+        onOpenChange={handleNotebookOpenChange}
         onToggleTodo={handleToggleTodo}
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDeleteTodo}
@@ -313,6 +423,14 @@ export default function Home() {
                 ? `全ての工程を終え、「${arrivedVoyage.name}」号は全速力で ${arrivedVoyage.goal} に入港！ 総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`
                 : `「${arrivedVoyage.name}」号、${arrivedVoyage.goal} に到着。総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`}
             </p>
+            {arrivedVoyage.lootLetter && (
+              <p className="text-sm text-black dark:text-zinc-50">
+                入港の戦利品：
+                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  {arrivedVoyage.lootLetter}
+                </span>
+              </p>
+            )}
             <button
               type="button"
               onClick={handleCloseArrival}
@@ -322,6 +440,14 @@ export default function Home() {
             </button>
           </div>
         </div>
+      )}
+
+      {treasureModal && (
+        <TreasureModal
+          letter={treasureModal.letter}
+          achievedCount={treasureModal.achievedCount}
+          onClose={() => setTreasureModal(null)}
+        />
       )}
 
       {isNewVoyageModalOpen && (
