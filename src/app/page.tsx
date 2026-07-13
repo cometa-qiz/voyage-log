@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useVoyages } from "@/hooks/useVoyages";
-import { useTreasures } from "@/hooks/useTreasures";
+import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { TabBar } from "@/components/TabBar";
 import { VoyagePanel } from "@/components/VoyagePanel";
@@ -153,6 +153,27 @@ export default function Home() {
       const shouldGrantTreasure =
         doneCount >= 3 * (activeVoyage.todoRewards + 1);
 
+      // 宝獲得モーダルと入港モーダルの表示順序バグ（工程が3の倍数個の航路で
+      // 最後の1件をチェックすると、無制限モードの全工程完了検知がonSnapshotの
+      // ローカル楽観反映だけで即座にhandleArriveを呼ぶため、2回のFirestore書き込み
+      // （updateVoyage→grantTreasure）完了を待つ従来のsetTreasureModal呼び出しより
+      // 必ず先に走ってしまっていた）の修正。letterはMath.random()による同期計算
+      // （pickRandomLetter()）なのでawaitより前に確定でき、setTreasureModal(...)を
+      // ここで同期的に呼ぶことで、直後のupdateVoyage()を起点にVoyagePanel側の
+      // 入港検知effectが（別のレンダーサイクルで）handleArriveを呼ぶより確実に先に
+      // 実行される。実際にFirestoreへ保存するletterも同じ値を使う。
+      let treasureLetter: string | null = null;
+      if (shouldGrantTreasure) {
+        treasureLetter = pickRandomLetter();
+        // showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`)（1592〜1593行目）を移植。
+        // v.todoRewardsはgrantTreasure呼び出し前に++済みのため、こちらでは更新後の値
+        // （activeVoyage.todoRewards + 1）を使う。
+        setTreasureModal({
+          letter: treasureLetter,
+          achievedCount: (activeVoyage.todoRewards + 1) * 3,
+        });
+      }
+
       await updateVoyage(activeVoyage.id, {
         todos: updatedTodos,
         todoRewards: shouldGrantTreasure
@@ -170,17 +191,8 @@ export default function Home() {
         ],
       });
 
-      if (shouldGrantTreasure) {
-        // showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`)（1592〜1593行目）を移植。
-        // v.todoRewardsはgrantTreasure呼び出し前に++済みのため、こちらでは更新後の値
-        // （activeVoyage.todoRewards + 1）を使う。
-        const treasure = await grantTreasure("todo");
-        if (treasure) {
-          setTreasureModal({
-            letter: treasure.letter,
-            achievedCount: (activeVoyage.todoRewards + 1) * 3,
-          });
-        }
+      if (treasureLetter) {
+        await grantTreasure("todo", treasureLetter);
       }
     } else {
       await updateVoyage(activeVoyage.id, {
