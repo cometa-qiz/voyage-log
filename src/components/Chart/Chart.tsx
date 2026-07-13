@@ -10,9 +10,18 @@ import { ROUTES } from "@/lib/routes";
 import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
-export function Chart({ voyage }: { voyage: Voyage }) {
+// progressはオプショナル。渡されなければprogressOf(voyage)を内部計算する
+// （従来通りの挙動）。渡された場合はそちらを優先する。呼び出し側（VoyagePanel）が
+// 無制限モードの船アニメーション中に補間値を渡すために使う。
+export function Chart({
+  voyage,
+  progress: progressOverride,
+}: {
+  voyage: Voyage;
+  progress?: number;
+}) {
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
-  const progress = progressOf(voyage);
+  const progress = progressOverride ?? progressOf(voyage);
   const routePathRef = useRef<SVGPathElement>(null);
 
   return (
