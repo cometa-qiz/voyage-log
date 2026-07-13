@@ -9,7 +9,9 @@ import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import { fmtDate, fmtDur, progressOf } from "@/lib/progress";
+import { Notebook } from "@/components/Notebook";
+import { TodoDock } from "@/components/TodoDock";
+import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
 // プロトタイプのuid()と同じ生成方式（Date.now()のbase36＋乱数）
@@ -62,6 +64,7 @@ export default function Home() {
     goal: string;
     accumMs: number;
     sessionCount: number;
+    fullSpeed: boolean;
   } | null>(null);
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
@@ -120,19 +123,97 @@ export default function Home() {
     });
   };
 
-  // arrive(v,false)の骨格版（時間目標モードのみ）。停泊確定と同じ処理を行い、
-  // 簡易な入港メッセージ用のstateをセットする。宝の付与・紙吹雪・SE・本格的な
-  // 入港カードはPhase 7/8の別タスク。
-  const handleArrive = async () => {
+  // toggleTodo()の基本部分（1564〜1581行目）を移植。宝の付与（1585〜1596行目）・
+  // 無制限モードの船アニメーション前進（1597〜1604行目）・全工程完了時の入港は別タスク。
+  const handleToggleTodo = async (todoId: string) => {
     if (!activeVoyage) return;
-    const { accumMs, payload } = buildAnchorUpdate(activeVoyage);
-    await updateVoyage(activeVoyage.id, payload);
+    const todo = activeVoyage.todos.find((t) => t.id === todoId);
+    if (!todo) return;
+
+    if (!todo.done) {
+      const elapsedAtDone = elapsedMs(activeVoyage);
+      const updatedVoyage = {
+        ...activeVoyage,
+        todos: activeVoyage.todos.map((t) =>
+          t.id === todoId
+            ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
+            : t,
+        ),
+      };
+      await updateVoyage(activeVoyage.id, {
+        todos: updatedVoyage.todos,
+        logs: [
+          ...activeVoyage.logs,
+          {
+            id: genId(),
+            ts: Date.now(),
+            note: `☑ 工程完了：${todo.text}（${fmtDur(elapsedAtDone)} 時点）`,
+            pos: progressOf(updatedVoyage),
+            sys: true,
+          },
+        ],
+      });
+    } else {
+      await updateVoyage(activeVoyage.id, {
+        todos: activeVoyage.todos.map((t) =>
+          t.id === todoId
+            ? { ...t, done: false, doneAt: null, elapsedAtDone: null }
+            : t,
+        ),
+      });
+    }
+  };
+
+  // addTodo()（1551〜1563行目）を移植。SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
+  const handleAddTodo = async (text: string) => {
+    if (!activeVoyage) return;
+    const trimmedText = text.trim();
+    if (!trimmedText) return;
+    await updateVoyage(activeVoyage.id, {
+      todos: [
+        ...activeVoyage.todos,
+        {
+          id: genId(),
+          text: trimmedText,
+          done: false,
+          doneAt: null,
+          elapsedAtDone: null,
+        },
+      ],
+    });
+  };
+
+  // deleteTodo()（1610〜1615行目）を移植。確認ダイアログなし（プロトタイプもconfirm()を使わない）。
+  const handleDeleteTodo = async (todoId: string) => {
+    if (!activeVoyage) return;
+    await updateVoyage(activeVoyage.id, {
+      todos: activeVoyage.todos.filter((t) => t.id !== todoId),
+    });
+  };
+
+  // arrive(v,fullSpeed)の骨格版。fullSpeed=falseは時間目標モードの100%到達、
+  // fullSpeed=trueは無制限モードの全工程完了検知（fullSpeedFinish()相当）から呼ばれる。
+  // fullSpeedFinish()冒頭の `if(v.sailing)anchorShip(v,true);`（1636行目）の通り、
+  // 停泊確定（accumMs確定・sessions追記・自動記帳）は航行中の場合のみ行う
+  // （時間目標モードの呼び出し元は必ずsailing:trueの状態で呼ばれるため、従来と同じ結果になる）。
+  // 全速前進アニメーション・入港宝の付与・紙吹雪・SEはPhase 7/8の別タスク。
+  const handleArrive = async (fullSpeed: boolean) => {
+    if (!activeVoyage) return;
+    let accumMs = activeVoyage.accumMs;
+    let sessionCount = activeVoyage.sessions.length;
+    if (activeVoyage.sailing) {
+      const built = buildAnchorUpdate(activeVoyage);
+      await updateVoyage(activeVoyage.id, built.payload);
+      accumMs = built.accumMs;
+      sessionCount = activeVoyage.sessions.length + 1;
+    }
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
       goal: activeVoyage.goal,
       accumMs,
-      sessionCount: activeVoyage.sessions.length + 1,
+      sessionCount,
+      fullSpeed,
     });
   };
 
@@ -211,17 +292,26 @@ export default function Home() {
         )}
       </main>
 
+      <TodoDock voyage={view === "chart" ? (activeVoyage ?? null) : null} />
+
+      <Notebook
+        voyage={view === "chart" ? (activeVoyage ?? null) : null}
+        onToggleTodo={handleToggleTodo}
+        onAddTodo={handleAddTodo}
+        onDeleteTodo={handleDeleteTodo}
+      />
+
       {arrivedVoyage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-white p-6 text-center dark:bg-zinc-900">
-            <div className="text-4xl">⚓</div>
+            <div className="text-4xl">{arrivedVoyage.fullSpeed ? "🚩" : "⚓"}</div>
             <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-              入 港
+              {arrivedVoyage.fullSpeed ? "全工程踏破・入港" : "入 港"}
             </h2>
             <p className="text-sm text-black dark:text-zinc-50">
-              「{arrivedVoyage.name}」号、{arrivedVoyage.goal}{" "}
-              に到着。総航行 {fmtDur(arrivedVoyage.accumMs)}・出航
-              {arrivedVoyage.sessionCount}回の航海でした。
+              {arrivedVoyage.fullSpeed
+                ? `全ての工程を終え、「${arrivedVoyage.name}」号は全速力で ${arrivedVoyage.goal} に入港！ 総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`
+                : `「${arrivedVoyage.name}」号、${arrivedVoyage.goal} に到着。総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`}
             </p>
             <button
               type="button"
