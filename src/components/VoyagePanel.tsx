@@ -57,6 +57,20 @@ export function VoyagePanel({
     return () => clearInterval(timer);
   }, [voyage.id, voyage.sailing]);
 
+  // onArriveは呼び出し側（page.tsx）でメモ化されていない（＝毎レンダー新しい関数）
+  // 可能性がある。以前、下記の入港検知effect（arrivedRef/fullSpeedArrivedRef）の
+  // 依存配列にonArriveを直接含めていたところ、無制限モードの全工程完了検知直後
+  // （onArrive→setArrivedVoyage→Home再レンダー→onArrive参照が変わる→…）が繰り返し発生し、
+  // 実機コンソールに「Maximum update depth exceeded」が出た（現象自体は各effect内の
+  // useRefガードで実害＝二重入港には至らないが、無駄な再実行が連鎖し警告の閾値を超えていた）。
+  // 呼び出し側の実装（メモ化の有無）に依存せず解決するため、常に最新のonArriveをrefに
+  // 保持し、入港検知effectの依存配列からはonArriveそのものを外す
+  // （Refで最新関数を握る、というEffect分離の定石パターン）。
+  const onArriveRef = useRef(onArrive);
+  useEffect(() => {
+    onArriveRef.current = onArrive;
+  });
+
   const targetProgress = progressOf(voyage);
 
   // toggleTodo()内の無制限モード船アニメーション（1597〜1604行目
@@ -129,8 +143,8 @@ export function VoyagePanel({
     if (targetProgress < 100) return;
     if (arrivedRef.current) return;
     arrivedRef.current = true;
-    onArrive(false);
-  }, [voyage.mode, voyage.sailing, targetProgress, onArrive]);
+    onArriveRef.current(false);
+  }, [voyage.mode, voyage.sailing, targetProgress]);
 
   // toggleTodo()内の全工程完了検知（1605〜1607行目
   // `if(allDone&&!v.archived){setTimeout(()=>fullSpeedFinish(v,before),...)}`）を移植。
@@ -147,8 +161,8 @@ export function VoyagePanel({
     if (!allDone) return;
     if (fullSpeedArrivedRef.current) return;
     fullSpeedArrivedRef.current = true;
-    onArrive(true);
-  }, [voyage.mode, voyage.archived, voyage.todos, onArrive]);
+    onArriveRef.current(true);
+  }, [voyage.mode, voyage.archived, voyage.todos]);
 
   return (
     <>
