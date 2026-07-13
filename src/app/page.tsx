@@ -10,6 +10,7 @@ import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
+import { TodoDock } from "@/components/TodoDock";
 import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -279,6 +280,8 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <TodoDock voyage={view === "chart" ? (activeVoyage ?? null) : null} />
 
       <Notebook
         voyage={view === "chart" ? (activeVoyage ?? null) : null}
