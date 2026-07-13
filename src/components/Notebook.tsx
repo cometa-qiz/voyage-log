@@ -6,22 +6,31 @@ import type { Todo, Voyage } from "@/lib/types";
 
 // 工程手帳。docs/voyage-log.html の #nbBtn/#nbBg/#notebook（645〜662行目）、
 // toggleNotebook()（1239〜1250行目）・renderNotebook()（1255〜1298行目）を移植。
-// nbVoyageId（手帳で特定の航路を指定して開く仕組み。Phase 7で使用）は今回実装せず、
-// 常に呼び出し側から渡されたvoyage（＝アクティブな航路）の工程を表示する。
+// nbVoyageId（手帳で特定の航路を指定して開く仕組み）はpage.tsx側で管理し、
+// このコンポーネントには表示対象voyage（notebookVoyage相当）として渡ってくる
+// （アクティブな航路とは限らず、「完了した航海」の📖ボタンから開いた
+// アーカイブ済み航路の場合もある）。開閉状態（isOpen）もpage.tsx側で管理し、
+// onOpenChangeで通知する（toggleNotebook(force)・openNotebookFor(id)相当の
+// 制御をpage.tsx側から行うため）。
 // チェックの切替・工程の追加・削除はそれぞれonToggleTodo/onAddTodo/onDeleteTodo経由で
 // 呼び出し側（page.tsx）が行う。
 export function Notebook({
   voyage,
+  badgeCount,
+  isOpen,
+  onOpenChange,
   onToggleTodo,
   onAddTodo,
   onDeleteTodo,
 }: {
   voyage: Voyage | null;
+  badgeCount: number;
+  isOpen: boolean;
+  onOpenChange: (open: boolean) => void;
   onToggleTodo: (todoId: string) => void;
   onAddTodo: (text: string) => void;
   onDeleteTodo: (todoId: string) => void;
 }) {
-  const [isOpen, setIsOpen] = useState(false);
   const [newTodoText, setNewTodoText] = useState("");
 
   if (!voyage) return null;
@@ -34,7 +43,6 @@ export function Notebook({
     setNewTodoText("");
   };
 
-  const remain = voyage.todos.filter((todo) => !todo.done).length;
   const done = voyage.todos.filter((todo) => todo.done).length;
   const total = voyage.todos.length;
 
@@ -54,14 +62,14 @@ export function Notebook({
     <>
       <button
         type="button"
-        onClick={() => setIsOpen(true)}
+        onClick={() => onOpenChange(true)}
         title="工程手帳を開く"
         className="fixed right-4 bottom-[calc(1rem+env(safe-area-inset-bottom))] z-40 flex h-14 w-14 items-center justify-center rounded-full bg-amber-500 text-2xl shadow-lg"
       >
         📖
-        {remain > 0 && (
+        {badgeCount > 0 && (
           <span className="absolute -top-1 -right-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-pink-600 px-1 font-mono text-xs font-bold text-white dark:border-zinc-900">
-            {remain}
+            {badgeCount}
           </span>
         )}
       </button>
@@ -69,7 +77,7 @@ export function Notebook({
       {isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/40"
-          onClick={() => setIsOpen(false)}
+          onClick={() => onOpenChange(false)}
         />
       )}
 
@@ -82,7 +90,7 @@ export function Notebook({
           工 程 手 帳
           <button
             type="button"
-            onClick={() => setIsOpen(false)}
+            onClick={() => onOpenChange(false)}
             className="ml-auto text-xl text-zinc-500 dark:text-zinc-400"
           >
             ×
@@ -94,6 +102,11 @@ export function Notebook({
             {voyage.name}
           </span>{" "}
           の工程
+          {voyage.archived && (
+            <span className="ml-1.5 text-xs text-teal-600 dark:text-teal-400">
+              （入港済・チェック可）
+            </span>
+          )}
         </div>
 
         {total > 0 && (

@@ -73,6 +73,12 @@ export default function Home() {
     letter: string;
     achievedCount: number;
   } | null>(null);
+  // nbVoyageId相当。手帳が「完了した航海」の📖ボタンから開かれている場合に
+  // 対象航路のidを保持する（null時はアクティブな航路に追従）。
+  const [notebookVoyageId, setNotebookVoyageId] = useState<string | null>(
+    null,
+  );
+  const [isNotebookOpen, setIsNotebookOpen] = useState(false);
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
   // （useVoyagesは既にisActive:trueのみ購読しているため、archivedのみ追加でフィルタする）
@@ -80,6 +86,19 @@ export default function Home() {
   const activeVoyage = activeVoyages.find((voyage) => voyage.id === activeId);
   // renderArchive()の `state.voyages.filter(v=>v.archived)` 相当
   const archivedVoyages = voyages.filter((voyage) => voyage.archived);
+
+  // nbVoyage()（1063〜1068行目）を移植。nbVoyageId（notebookVoyageId）が設定されて
+  // おり該当航路が見つかればそれを優先（archived含む全voyagesから検索）、
+  // 無ければアクティブな航路に追従する。render()内でcollection表示中は
+  // nbBtn自体を隠す（toggleNotebook(false)相当）仕様も反映し、view!=='chart'では常にnull。
+  const notebookVoyage =
+    view !== "chart"
+      ? null
+      : ((notebookVoyageId
+          ? voyages.find((voyage) => voyage.id === notebookVoyageId)
+          : undefined) ??
+        activeVoyage ??
+        null);
 
   // render()内の自動選択ロジック
   // `if(state.view==='chart'&&!activeVoyage()&&act.length)state.activeId=act[0].id;` を移植
@@ -131,28 +150,29 @@ export default function Home() {
   };
 
   // toggleTodo()の基本部分（1564〜1581行目）・工程宝の判定（1585〜1596行目）を移植。
+  // アーカイブ済み航海でも工程チェック・工程宝の獲得は有効なため、activeVoyageではなく
+  // notebookVoyage（手帳が表示している航路。nbVoyage()相当）を対象にする。
   // 無制限モードの船アニメーション前進（1597〜1604行目）・全工程完了時の入港は別タスク。
-  // 宝獲得モーダル（showTreasure相当）はPhase 7の別タスクのため、今回は付与処理のみ。
   const handleToggleTodo = async (todoId: string) => {
-    if (!activeVoyage) return;
-    const todo = activeVoyage.todos.find((t) => t.id === todoId);
+    if (!notebookVoyage) return;
+    const todo = notebookVoyage.todos.find((t) => t.id === todoId);
     if (!todo) return;
 
     if (!todo.done) {
-      const elapsedAtDone = elapsedMs(activeVoyage);
-      const updatedTodos = activeVoyage.todos.map((t) =>
+      const elapsedAtDone = elapsedMs(notebookVoyage);
+      const updatedTodos = notebookVoyage.todos.map((t) =>
         t.id === todoId
           ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
           : t,
       );
-      const updatedVoyage = { ...activeVoyage, todos: updatedTodos };
+      const updatedVoyage = { ...notebookVoyage, todos: updatedTodos };
 
       // `doneCount>=3*(v.todoRewards+1)`（1589行目）を移植。
       // チェック解除方向（elseブロック）ではこの判定自体を行わない
       // （todoRewardsの減算はconstraints.md #12で禁止）。
       const doneCount = updatedTodos.filter((t) => t.done).length;
       const shouldGrantTreasure =
-        doneCount >= 3 * (activeVoyage.todoRewards + 1);
+        doneCount >= 3 * (notebookVoyage.todoRewards + 1);
 
       // 宝獲得モーダルと入港モーダルの表示順序バグ（工程が3の倍数個の航路で
       // 最後の1件をチェックすると、無制限モードの全工程完了検知がonSnapshotの
@@ -168,20 +188,20 @@ export default function Home() {
         treasureLetter = pickRandomLetter();
         // showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`)（1592〜1593行目）を移植。
         // v.todoRewardsはgrantTreasure呼び出し前に++済みのため、こちらでは更新後の値
-        // （activeVoyage.todoRewards + 1）を使う。
+        // （notebookVoyage.todoRewards + 1）を使う。
         setTreasureModal({
           letter: treasureLetter,
-          achievedCount: (activeVoyage.todoRewards + 1) * 3,
+          achievedCount: (notebookVoyage.todoRewards + 1) * 3,
         });
       }
 
-      await updateVoyage(activeVoyage.id, {
+      await updateVoyage(notebookVoyage.id, {
         todos: updatedTodos,
         todoRewards: shouldGrantTreasure
-          ? activeVoyage.todoRewards + 1
-          : activeVoyage.todoRewards,
+          ? notebookVoyage.todoRewards + 1
+          : notebookVoyage.todoRewards,
         logs: [
-          ...activeVoyage.logs,
+          ...notebookVoyage.logs,
           {
             id: genId(),
             ts: Date.now(),
@@ -196,8 +216,8 @@ export default function Home() {
         await grantTreasure("todo", treasureLetter);
       }
     } else {
-      await updateVoyage(activeVoyage.id, {
-        todos: activeVoyage.todos.map((t) =>
+      await updateVoyage(notebookVoyage.id, {
+        todos: notebookVoyage.todos.map((t) =>
           t.id === todoId
             ? { ...t, done: false, doneAt: null, elapsedAtDone: null }
             : t,
@@ -206,14 +226,15 @@ export default function Home() {
     }
   };
 
-  // addTodo()（1551〜1563行目）を移植。SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
+  // addTodo()（1551〜1563行目）を移植。notebookVoyage（手帳が表示している航路）が対象。
+  // SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
   const handleAddTodo = async (text: string) => {
-    if (!activeVoyage) return;
+    if (!notebookVoyage) return;
     const trimmedText = text.trim();
     if (!trimmedText) return;
-    await updateVoyage(activeVoyage.id, {
+    await updateVoyage(notebookVoyage.id, {
       todos: [
-        ...activeVoyage.todos,
+        ...notebookVoyage.todos,
         {
           id: genId(),
           text: trimmedText,
@@ -225,12 +246,30 @@ export default function Home() {
     });
   };
 
-  // deleteTodo()（1610〜1615行目）を移植。確認ダイアログなし（プロトタイプもconfirm()を使わない）。
+  // deleteTodo()（1610〜1615行目）を移植。notebookVoyage（手帳が表示している航路）が対象。
+  // 確認ダイアログなし（プロトタイプもconfirm()を使わない）。
   const handleDeleteTodo = async (todoId: string) => {
-    if (!activeVoyage) return;
-    await updateVoyage(activeVoyage.id, {
-      todos: activeVoyage.todos.filter((t) => t.id !== todoId),
+    if (!notebookVoyage) return;
+    await updateVoyage(notebookVoyage.id, {
+      todos: notebookVoyage.todos.filter((t) => t.id !== todoId),
     });
+  };
+
+  // toggleNotebook(force)（1239〜1250行目）を移植。閉じたら
+  // `if(!open)nbVoyageId=null;`（1244行目）の通りnotebookVoyageIdをリセットし、
+  // アクティブな航路の表示に戻す。
+  const handleNotebookOpenChange = (open: boolean) => {
+    setIsNotebookOpen(open);
+    if (!open) {
+      setNotebookVoyageId(null);
+    }
+  };
+
+  // openNotebookFor(id)（1251〜1254行目）を移植。「完了した航海」の
+  // 「📖 工程 n/m」ボタンから、対象のアーカイブ済み航路を指定して手帳を開く。
+  const handleOpenNotebookFor = (voyageId: string) => {
+    setNotebookVoyageId(voyageId);
+    setIsNotebookOpen(true);
   };
 
   // arrive(v,fullSpeed)の骨格版。fullSpeed=falseは時間目標モードの100%到達、
@@ -293,7 +332,14 @@ export default function Home() {
           setView("chart");
           setActiveId(id);
         }}
-        onSelectCollection={() => setView("collection")}
+        onSelectCollection={() => {
+          setView("collection");
+          // render()内 `if(state.view==='collection'){nbBtn.style.display='none';
+          // ...toggleNotebook(false);}`（1092〜1095行目）を移植。宝物庫表示中は
+          // 手帳を閉じ、開いていたアーカイブ済み航路の指定もリセットする。
+          setIsNotebookOpen(false);
+          setNotebookVoyageId(null);
+        }}
         onOpenNewVoyage={() => setIsNewVoyageModalOpen(true)}
       />
 
@@ -336,6 +382,16 @@ export default function Home() {
                     {voyage.sessions.length}回 ／{" "}
                     {fmtDate(voyage.archivedAt ?? voyage.createdAt)} 入港
                   </span>
+                  {voyage.todos.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => handleOpenNotebookFor(voyage.id)}
+                      className="rounded-full border border-black/[.08] px-3 py-1 text-xs dark:border-white/[.145]"
+                    >
+                      📖 工程 {voyage.todos.filter((t) => t.done).length}/
+                      {voyage.todos.length}
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -346,7 +402,10 @@ export default function Home() {
       <TodoDock voyage={view === "chart" ? (activeVoyage ?? null) : null} />
 
       <Notebook
-        voyage={view === "chart" ? (activeVoyage ?? null) : null}
+        voyage={notebookVoyage}
+        badgeCount={activeVoyage ? activeVoyage.todos.filter((t) => !t.done).length : 0}
+        isOpen={isNotebookOpen}
+        onOpenChange={handleNotebookOpenChange}
         onToggleTodo={handleToggleTodo}
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDeleteTodo}
