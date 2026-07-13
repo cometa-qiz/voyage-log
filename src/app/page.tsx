@@ -210,7 +210,11 @@ export default function Home() {
   // fullSpeedFinish()冒頭の `if(v.sailing)anchorShip(v,true);`（1636行目）の通り、
   // 停泊確定（accumMs確定・sessions追記・自動記帳）は航行中の場合のみ行う
   // （時間目標モードの呼び出し元は必ずsailing:trueの状態で呼ばれるため、従来と同じ結果になる）。
-  // 全速前進アニメーション・入港宝の付与・紙吹雪・SEはPhase 7/8の別タスク。
+  // `const letter=grantTreasure('goal');`（arrive()内、1680行目）を移植。
+  // handleArrive自体はVoyagePanel側の二重発火防止ガード（arrivedRef/fullSpeedArrivedRef、
+  // およびarchived:trueの航路にはVoyagePanelがそもそもマウントされない構造）により
+  // 1回の入港につき1回しか呼ばれないため、ここで再付与防止のガードを重複して
+  // 持つ必要はない。全速前進アニメーション・宝獲得モーダル・紙吹雪・SEはPhase 7/8の別タスク。
   const handleArrive = async (fullSpeed: boolean) => {
     if (!activeVoyage) return;
     let accumMs = activeVoyage.accumMs;
@@ -221,6 +225,7 @@ export default function Home() {
       accumMs = built.accumMs;
       sessionCount = activeVoyage.sessions.length + 1;
     }
+    await grantTreasure("goal");
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
