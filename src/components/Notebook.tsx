@@ -8,18 +8,31 @@ import type { Todo, Voyage } from "@/lib/types";
 // toggleNotebook()（1239〜1250行目）・renderNotebook()（1255〜1298行目）を移植。
 // nbVoyageId（手帳で特定の航路を指定して開く仕組み。Phase 7で使用）は今回実装せず、
 // 常に呼び出し側から渡されたvoyage（＝アクティブな航路）の工程を表示する。
-// チェックの切替はonToggleTodo経由で呼び出し側（page.tsx）が行う。
-// 工程の追加・削除は次タスクで実装するため、ここでは見た目のみ用意する。
+// チェックの切替・工程の追加・削除はそれぞれonToggleTodo/onAddTodo/onDeleteTodo経由で
+// 呼び出し側（page.tsx）が行う。
 export function Notebook({
   voyage,
   onToggleTodo,
+  onAddTodo,
+  onDeleteTodo,
 }: {
   voyage: Voyage | null;
   onToggleTodo: (todoId: string) => void;
+  onAddTodo: (text: string) => void;
+  onDeleteTodo: (todoId: string) => void;
 }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [newTodoText, setNewTodoText] = useState("");
 
   if (!voyage) return null;
+
+  // addTodo()（1551〜1563行目）を移植。空文字は追加しない。
+  const handleAddTodo = () => {
+    const trimmedText = newTodoText.trim();
+    if (!trimmedText) return;
+    onAddTodo(trimmedText);
+    setNewTodoText("");
+  };
 
   const remain = voyage.todos.filter((todo) => !todo.done).length;
   const done = voyage.todos.filter((todo) => todo.done).length;
@@ -145,7 +158,10 @@ export function Notebook({
                     <button
                       type="button"
                       title="消す"
-                      onClick={(event) => event.stopPropagation()}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        onDeleteTodo(todo.id);
+                      }}
                       className="shrink-0 text-zinc-400 dark:text-zinc-500"
                     >
                       ×
@@ -159,11 +175,17 @@ export function Notebook({
 
         <div className="absolute right-0 bottom-0 left-0 flex gap-2 border-t border-black/[.08] bg-white p-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] dark:border-white/[.145] dark:bg-zinc-900">
           <input
+            value={newTodoText}
+            onChange={(event) => setNewTodoText(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter") handleAddTodo();
+            }}
             placeholder="工程・Todoを追加"
             className="flex-1 rounded-md border border-black/[.08] px-3 py-2 text-base dark:border-white/[.145] dark:bg-zinc-800"
           />
           <button
             type="button"
+            onClick={handleAddTodo}
             className="rounded-md bg-amber-500 px-3.5 py-2 text-sm font-semibold text-black"
           >
             ＋

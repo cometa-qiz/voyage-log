@@ -162,6 +162,33 @@ export default function Home() {
     }
   };
 
+  // addTodo()（1551〜1563行目）を移植。SE.write()・入力欄フォーカスはPhase 8/UI側の関心事のため対象外。
+  const handleAddTodo = async (text: string) => {
+    if (!activeVoyage) return;
+    const trimmedText = text.trim();
+    if (!trimmedText) return;
+    await updateVoyage(activeVoyage.id, {
+      todos: [
+        ...activeVoyage.todos,
+        {
+          id: genId(),
+          text: trimmedText,
+          done: false,
+          doneAt: null,
+          elapsedAtDone: null,
+        },
+      ],
+    });
+  };
+
+  // deleteTodo()（1610〜1615行目）を移植。確認ダイアログなし（プロトタイプもconfirm()を使わない）。
+  const handleDeleteTodo = async (todoId: string) => {
+    if (!activeVoyage) return;
+    await updateVoyage(activeVoyage.id, {
+      todos: activeVoyage.todos.filter((t) => t.id !== todoId),
+    });
+  };
+
   // arrive(v,false)の骨格版（時間目標モードのみ）。停泊確定と同じ処理を行い、
   // 簡易な入港メッセージ用のstateをセットする。宝の付与・紙吹雪・SE・本格的な
   // 入港カードはPhase 7/8の別タスク。
@@ -256,6 +283,8 @@ export default function Home() {
       <Notebook
         voyage={view === "chart" ? (activeVoyage ?? null) : null}
         onToggleTodo={handleToggleTodo}
+        onAddTodo={handleAddTodo}
+        onDeleteTodo={handleDeleteTodo}
       />
 
       {arrivedVoyage && (
