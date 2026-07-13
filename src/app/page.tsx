@@ -52,7 +52,7 @@ function buildAnchorUpdate(voyage: Voyage) {
 
 export default function Home() {
   const { voyages, createVoyage, updateVoyage, discardVoyage } = useVoyages();
-  const { treasures } = useTreasures();
+  const { treasures, grantTreasure } = useTreasures();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
@@ -123,8 +123,9 @@ export default function Home() {
     });
   };
 
-  // toggleTodo()の基本部分（1564〜1581行目）を移植。宝の付与（1585〜1596行目）・
+  // toggleTodo()の基本部分（1564〜1581行目）・工程宝の判定（1585〜1596行目）を移植。
   // 無制限モードの船アニメーション前進（1597〜1604行目）・全工程完了時の入港は別タスク。
+  // 宝獲得モーダル（showTreasure相当）はPhase 7の別タスクのため、今回は付与処理のみ。
   const handleToggleTodo = async (todoId: string) => {
     if (!activeVoyage) return;
     const todo = activeVoyage.todos.find((t) => t.id === todoId);
@@ -132,16 +133,25 @@ export default function Home() {
 
     if (!todo.done) {
       const elapsedAtDone = elapsedMs(activeVoyage);
-      const updatedVoyage = {
-        ...activeVoyage,
-        todos: activeVoyage.todos.map((t) =>
-          t.id === todoId
-            ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
-            : t,
-        ),
-      };
+      const updatedTodos = activeVoyage.todos.map((t) =>
+        t.id === todoId
+          ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
+          : t,
+      );
+      const updatedVoyage = { ...activeVoyage, todos: updatedTodos };
+
+      // `doneCount>=3*(v.todoRewards+1)`（1589行目）を移植。
+      // チェック解除方向（elseブロック）ではこの判定自体を行わない
+      // （todoRewardsの減算はconstraints.md #12で禁止）。
+      const doneCount = updatedTodos.filter((t) => t.done).length;
+      const shouldGrantTreasure =
+        doneCount >= 3 * (activeVoyage.todoRewards + 1);
+
       await updateVoyage(activeVoyage.id, {
-        todos: updatedVoyage.todos,
+        todos: updatedTodos,
+        todoRewards: shouldGrantTreasure
+          ? activeVoyage.todoRewards + 1
+          : activeVoyage.todoRewards,
         logs: [
           ...activeVoyage.logs,
           {
@@ -153,6 +163,10 @@ export default function Home() {
           },
         ],
       });
+
+      if (shouldGrantTreasure) {
+        await grantTreasure("todo");
+      }
     } else {
       await updateVoyage(activeVoyage.id, {
         todos: activeVoyage.todos.map((t) =>
