@@ -181,7 +181,7 @@
 
 ### 獲得ロジック
 - [x] `grantTreasure()`（A〜Z均等抽選・`treasures`へ追記）を実装する
-- [ ] 工程宝: `done数 >= 3 × (todoRewards + 1)` で排出し `todoRewards` を+1する（**チェック解除で減算しない**）
+- [x] 工程宝: `done数 >= 3 × (todoRewards + 1)` で排出し `todoRewards` を+1する（**チェック解除で減算しない**）
 - [ ] 入港宝: 入港時に1個付与する（アーカイブ済みへの再付与なし）
 
 ### UI
