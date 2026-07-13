@@ -65,3 +65,14 @@ body {
     opacity: 0.3;
   }
 }
+
+/* ---------- 宝獲得モーダルの文字ポップ（docs/voyage-log.html .t-big/@keyframes tpop を移植） ---------- */
+.treasure-letter {
+  animation: tpop 0.55s cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes tpop {
+  from {
+    transform: scale(0.2) rotate(-16deg);
+    opacity: 0;
+  }
+}

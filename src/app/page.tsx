@@ -11,6 +11,7 @@ import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
 import { TodoDock } from "@/components/TodoDock";
+import { TreasureModal } from "@/components/TreasureModal";
 import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -65,6 +66,11 @@ export default function Home() {
     accumMs: number;
     sessionCount: number;
     fullSpeed: boolean;
+    lootLetter: string | null;
+  } | null>(null);
+  const [treasureModal, setTreasureModal] = useState<{
+    letter: string;
+    achievedCount: number;
   } | null>(null);
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
@@ -165,7 +171,16 @@ export default function Home() {
       });
 
       if (shouldGrantTreasure) {
-        await grantTreasure("todo");
+        // showTreasure(letter,`工程を ${v.todoRewards*3} 個達成した戦利品！`)（1592〜1593行目）を移植。
+        // v.todoRewardsはgrantTreasure呼び出し前に++済みのため、こちらでは更新後の値
+        // （activeVoyage.todoRewards + 1）を使う。
+        const treasure = await grantTreasure("todo");
+        if (treasure) {
+          setTreasureModal({
+            letter: treasure.letter,
+            achievedCount: (activeVoyage.todoRewards + 1) * 3,
+          });
+        }
       }
     } else {
       await updateVoyage(activeVoyage.id, {
@@ -225,7 +240,7 @@ export default function Home() {
       accumMs = built.accumMs;
       sessionCount = activeVoyage.sessions.length + 1;
     }
-    await grantTreasure("goal");
+    const treasure = await grantTreasure("goal");
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
@@ -233,6 +248,7 @@ export default function Home() {
       accumMs,
       sessionCount,
       fullSpeed,
+      lootLetter: treasure?.letter ?? null,
     });
   };
 
@@ -332,6 +348,14 @@ export default function Home() {
                 ? `全ての工程を終え、「${arrivedVoyage.name}」号は全速力で ${arrivedVoyage.goal} に入港！ 総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`
                 : `「${arrivedVoyage.name}」号、${arrivedVoyage.goal} に到着。総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`}
             </p>
+            {arrivedVoyage.lootLetter && (
+              <p className="text-sm text-black dark:text-zinc-50">
+                入港の戦利品：
+                <span className="font-semibold text-amber-600 dark:text-amber-400">
+                  {arrivedVoyage.lootLetter}
+                </span>
+              </p>
+            )}
             <button
               type="button"
               onClick={handleCloseArrival}
@@ -341,6 +365,14 @@ export default function Home() {
             </button>
           </div>
         </div>
+      )}
+
+      {treasureModal && (
+        <TreasureModal
+          letter={treasureModal.letter}
+          achievedCount={treasureModal.achievedCount}
+          onClose={() => setTreasureModal(null)}
+        />
       )}
 
       {isNewVoyageModalOpen && (
