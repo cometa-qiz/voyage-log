@@ -9,6 +9,7 @@ import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Notebook } from "@/components/Notebook";
 import { fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -210,6 +211,8 @@ export default function Home() {
           </div>
         )}
       </main>
+
+      <Notebook voyage={view === "chart" ? (activeVoyage ?? null) : null} />
 
       {arrivedVoyage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
