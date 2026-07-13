@@ -229,9 +229,14 @@ export default function Home() {
   // handleArrive自体はVoyagePanel側の二重発火防止ガード（arrivedRef/fullSpeedArrivedRef、
   // およびarchived:trueの航路にはVoyagePanelがそもそもマウントされない構造）により
   // 1回の入港につき1回しか呼ばれないため、ここで再付与防止のガードを重複して
-  // 持つ必要はない。全速前進アニメーション・宝獲得モーダル・紙吹雪・SEはPhase 7/8の別タスク。
+  // 持つ必要はない。全速前進アニメーション・紙吹雪・SEはPhase 7/8の別タスク。
   const handleArrive = async (fullSpeed: boolean) => {
     if (!activeVoyage) return;
+    // arrive()冒頭の `closeModal('treasureModal');`（1679行目）を移植。
+    // 工程が3の倍数個の航路で最後の1件をチェックすると、工程宝獲得と全工程完了入港が
+    // 同一操作内で同時に発生しうる。入港処理を優先し、開いていた工程宝獲得モーダルは
+    // 強制的に閉じる。
+    setTreasureModal(null);
     let accumMs = activeVoyage.accumMs;
     let sessionCount = activeVoyage.sessions.length;
     if (activeVoyage.sailing) {
