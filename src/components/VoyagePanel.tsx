@@ -148,13 +148,18 @@ export function VoyagePanel({
 
   // toggleTodo()内の全工程完了検知（1605〜1607行目
   // `if(allDone&&!v.archived){setTimeout(()=>fullSpeedFinish(v,before),...)}`）を移植。
+  // allDone判定・fullSpeedFinish()呼び出しはプロトタイプ側でモードを問わず発火する
+  // （無制限モード限定ではない。時間目標モードでも全工程チェック完了で、
+  // 目標時間が残っていても入港する。status.mdの完了確認
+  // 「全工程完了で入港し、時間目標モードでは目標時間が残っていても入港する」はこの仕様）。
+  // 時間目標モードの経過時間100%到達（arrivedRef用effect、上記）とはトリガーが別であり、
+  // 両方が同時に条件を満たすケースはv1では考慮しない。
   // 全速前進アニメーション（fullSpeedFinish()の3秒補間）はPhase 8の別タスクのため、
   // ここでは検知したら即座にonArrive(true)を呼ぶ（アニメーションなし）。
   // 二重発火防止はarrivedRefと同じ方針で別のrefを使う。
   const fullSpeedArrivedRef = useRef(false);
 
   useEffect(() => {
-    if (voyage.mode !== "free") return;
     if (voyage.archived) return;
     const allDone =
       voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
@@ -162,7 +167,7 @@ export function VoyagePanel({
     if (fullSpeedArrivedRef.current) return;
     fullSpeedArrivedRef.current = true;
     onArriveRef.current(true);
-  }, [voyage.mode, voyage.archived, voyage.todos]);
+  }, [voyage.archived, voyage.todos]);
 
   return (
     <>
