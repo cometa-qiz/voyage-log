@@ -47,7 +47,7 @@ export function VoyagePanel({
   onOpenNote: () => void;
   onDiscard: () => void;
   onDeleteLog: (logId: string) => Promise<void>;
-  onArrive: () => void;
+  onArrive: (fullSpeed: boolean) => void;
 }) {
   const [, setTick] = useState(0);
 
@@ -129,8 +129,26 @@ export function VoyagePanel({
     if (targetProgress < 100) return;
     if (arrivedRef.current) return;
     arrivedRef.current = true;
-    onArrive();
+    onArrive(false);
   }, [voyage.mode, voyage.sailing, targetProgress, onArrive]);
+
+  // toggleTodo()内の全工程完了検知（1605〜1607行目
+  // `if(allDone&&!v.archived){setTimeout(()=>fullSpeedFinish(v,before),...)}`）を移植。
+  // 全速前進アニメーション（fullSpeedFinish()の3秒補間）はPhase 8の別タスクのため、
+  // ここでは検知したら即座にonArrive(true)を呼ぶ（アニメーションなし）。
+  // 二重発火防止はarrivedRefと同じ方針で別のrefを使う。
+  const fullSpeedArrivedRef = useRef(false);
+
+  useEffect(() => {
+    if (voyage.mode !== "free") return;
+    if (voyage.archived) return;
+    const allDone =
+      voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
+    if (!allDone) return;
+    if (fullSpeedArrivedRef.current) return;
+    fullSpeedArrivedRef.current = true;
+    onArrive(true);
+  }, [voyage.mode, voyage.archived, voyage.todos, onArrive]);
 
   return (
     <>
