@@ -10,7 +10,7 @@ import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
-import { fmtDate, fmtDur, progressOf } from "@/lib/progress";
+import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
 // プロトタイプのuid()と同じ生成方式（Date.now()のbase36＋乱数）
@@ -121,6 +121,47 @@ export default function Home() {
     });
   };
 
+  // toggleTodo()の基本部分（1564〜1581行目）を移植。宝の付与（1585〜1596行目）・
+  // 無制限モードの船アニメーション前進（1597〜1604行目）・全工程完了時の入港は別タスク。
+  const handleToggleTodo = async (todoId: string) => {
+    if (!activeVoyage) return;
+    const todo = activeVoyage.todos.find((t) => t.id === todoId);
+    if (!todo) return;
+
+    if (!todo.done) {
+      const elapsedAtDone = elapsedMs(activeVoyage);
+      const updatedVoyage = {
+        ...activeVoyage,
+        todos: activeVoyage.todos.map((t) =>
+          t.id === todoId
+            ? { ...t, done: true, doneAt: Date.now(), elapsedAtDone }
+            : t,
+        ),
+      };
+      await updateVoyage(activeVoyage.id, {
+        todos: updatedVoyage.todos,
+        logs: [
+          ...activeVoyage.logs,
+          {
+            id: genId(),
+            ts: Date.now(),
+            note: `☑ 工程完了：${todo.text}（${fmtDur(elapsedAtDone)} 時点）`,
+            pos: progressOf(updatedVoyage),
+            sys: true,
+          },
+        ],
+      });
+    } else {
+      await updateVoyage(activeVoyage.id, {
+        todos: activeVoyage.todos.map((t) =>
+          t.id === todoId
+            ? { ...t, done: false, doneAt: null, elapsedAtDone: null }
+            : t,
+        ),
+      });
+    }
+  };
+
   // arrive(v,false)の骨格版（時間目標モードのみ）。停泊確定と同じ処理を行い、
   // 簡易な入港メッセージ用のstateをセットする。宝の付与・紙吹雪・SE・本格的な
   // 入港カードはPhase 7/8の別タスク。
@@ -212,7 +253,10 @@ export default function Home() {
         )}
       </main>
 
-      <Notebook voyage={view === "chart" ? (activeVoyage ?? null) : null} />
+      <Notebook
+        voyage={view === "chart" ? (activeVoyage ?? null) : null}
+        onToggleTodo={handleToggleTodo}
+      />
 
       {arrivedVoyage && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">

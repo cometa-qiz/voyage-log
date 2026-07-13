@@ -8,8 +8,15 @@ import type { Todo, Voyage } from "@/lib/types";
 // toggleNotebook()（1239〜1250行目）・renderNotebook()（1255〜1298行目）を移植。
 // nbVoyageId（手帳で特定の航路を指定して開く仕組み。Phase 7で使用）は今回実装せず、
 // 常に呼び出し側から渡されたvoyage（＝アクティブな航路）の工程を表示する。
-// チェックの切替・工程の追加・削除は次タスクで実装するため、ここでは見た目のみ用意する。
-export function Notebook({ voyage }: { voyage: Voyage | null }) {
+// チェックの切替はonToggleTodo経由で呼び出し側（page.tsx）が行う。
+// 工程の追加・削除は次タスクで実装するため、ここでは見た目のみ用意する。
+export function Notebook({
+  voyage,
+  onToggleTodo,
+}: {
+  voyage: Voyage | null;
+  onToggleTodo: (todoId: string) => void;
+}) {
   const [isOpen, setIsOpen] = useState(false);
 
   if (!voyage) return null;
@@ -102,7 +109,8 @@ export function Notebook({ voyage }: { voyage: Voyage | null }) {
                 return (
                   <div
                     key={todo.id}
-                    className="flex items-start gap-2.5 rounded-lg border border-black/[.08] p-3 text-sm dark:border-white/[.145]"
+                    onClick={() => onToggleTodo(todo.id)}
+                    className="flex cursor-pointer items-start gap-2.5 rounded-lg border border-black/[.08] p-3 text-sm transition-colors hover:border-amber-500/50 dark:border-white/[.145]"
                   >
                     <div
                       className={`mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border text-xs ${
@@ -137,6 +145,7 @@ export function Notebook({ voyage }: { voyage: Voyage | null }) {
                     <button
                       type="button"
                       title="消す"
+                      onClick={(event) => event.stopPropagation()}
                       className="shrink-0 text-zinc-400 dark:text-zinc-500"
                     >
                       ×
