@@ -12,6 +12,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
 import { TodoDock } from "@/components/TodoDock";
 import { TreasureModal } from "@/components/TreasureModal";
+import { TreasureCollection } from "@/components/TreasureCollection";
 import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
@@ -298,9 +299,7 @@ export default function Home() {
 
       <main className="mx-auto flex w-full max-w-[1060px] flex-1 flex-col gap-4 p-4">
         {view === "collection" ? (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-            宝物庫（図鑑グリッド表示はPhase 7で実装します）
-          </p>
+          <TreasureCollection treasures={treasures} />
         ) : activeVoyage ? (
           <VoyagePanel
             key={activeVoyage.id}
