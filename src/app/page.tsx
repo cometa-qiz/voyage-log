@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useVoyages } from "@/hooks/useVoyages";
 import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
+import { useSoundContext } from "@/components/SoundProvider";
 import { TabBar } from "@/components/TabBar";
 import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
@@ -55,6 +56,7 @@ function buildAnchorUpdate(voyage: Voyage) {
 export default function Home() {
   const { voyages, createVoyage, updateVoyage, discardVoyage } = useVoyages();
   const { treasures, grantTreasure } = useTreasures();
+  const sound = useSoundContext();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
@@ -113,8 +115,10 @@ export default function Home() {
 
     if (activeVoyage.sailing) {
       const { payload } = buildAnchorUpdate(activeVoyage);
+      sound.anchor();
       await updateVoyage(activeVoyage.id, payload);
     } else {
+      sound.depart();
       await updateVoyage(activeVoyage.id, {
         sailing: true,
         sailStart: Date.now(),
@@ -126,6 +130,7 @@ export default function Home() {
   // （モーダルを開いた時点の値を使い回さない）。
   const handleAddNote = async (note: string) => {
     if (!activeVoyage) return;
+    sound.write();
     await updateVoyage(activeVoyage.id, {
       logs: [
         ...activeVoyage.logs,
@@ -195,6 +200,7 @@ export default function Home() {
         });
       }
 
+      sound.todoDone();
       await updateVoyage(notebookVoyage.id, {
         todos: updatedTodos,
         todoRewards: shouldGrantTreasure
@@ -214,8 +220,10 @@ export default function Home() {
 
       if (treasureLetter) {
         await grantTreasure("todo", treasureLetter);
+        sound.treasure();
       }
     } else {
+      sound.todoUndo();
       await updateVoyage(notebookVoyage.id, {
         todos: notebookVoyage.todos.map((t) =>
           t.id === todoId
@@ -232,6 +240,7 @@ export default function Home() {
     if (!notebookVoyage) return;
     const trimmedText = text.trim();
     if (!trimmedText) return;
+    sound.write();
     await updateVoyage(notebookVoyage.id, {
       todos: [
         ...notebookVoyage.todos,
@@ -298,6 +307,7 @@ export default function Home() {
       sessionCount = activeVoyage.sessions.length + 1;
     }
     const treasure = await grantTreasure("goal");
+    sound.treasure();
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
