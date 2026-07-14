@@ -321,6 +321,105 @@ body {
   opacity: 0.85;
 }
 
+/* ---------- 入港（docs/voyage-log.html .arrival/.arrival-card 等を移植・505〜536行目） ---------- */
+/* .arrival はプロトタイプでは`display:none`＋`.open`クラス付与で表示切替するが、
+   本実装ではReactの条件レンダリングでマウント自体を制御するため、
+   display:flexを直接指定し.openクラス相当の分岐は持たない。 */
+.arrival {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(6, 14, 22, 0.75);
+}
+.arrival-card {
+  text-align: center;
+  background: #17293a;
+  border: 2px solid #c9a85c;
+  border-radius: 14px;
+  padding: 36px 46px;
+  animation: pop 0.4s cubic-bezier(0.3, 1.5, 0.5, 1);
+  box-shadow: 0 0 80px rgba(201, 168, 92, 0.3);
+  position: relative;
+  z-index: 2;
+}
+.arrival-card .flag {
+  font-size: 48px;
+}
+.arrival-card h2 {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 23px;
+  letter-spacing: 0.3em;
+  color: #c9a85c;
+  margin: 10px 0 6px;
+}
+.arrival-card p {
+  color: #9ba8b0;
+  font-size: 14px;
+  margin-bottom: 14px;
+  max-width: 340px;
+}
+.arrival-loot {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 10px;
+  border: 1px dashed rgba(201, 168, 92, 0.4);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #9ba8b0;
+}
+.arrival-loot .loot-letter {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(160deg, #f5e3a8, #c9a85c 45%, #8e6f2e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
+}
+.confetti {
+  position: absolute;
+  top: -8px;
+  width: 9px;
+  height: 14px;
+  opacity: 0.95;
+  animation: fall linear forwards;
+  z-index: 1;
+}
+@keyframes fall {
+  to {
+    transform: translateY(105vh) rotate(720deg);
+    opacity: 0.7;
+  }
+}
+@keyframes pop {
+  from {
+    transform: scale(0.92);
+    opacity: 0;
+  }
+}
+.btn-ok {
+  background: #c9a85c;
+  border: none;
+  border-radius: 8px;
+  color: #1a1408;
+  font-weight: 700;
+  padding: 9px 22px;
+  cursor: pointer;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+.btn-ok:hover {
+  filter: brightness(1.08);
+}
+
 /* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
 .sailing-dot {
   width: 7px;
