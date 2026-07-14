@@ -163,6 +163,50 @@ body {
   opacity: 1;
 }
 
+/* ---------- 時間帯（docs/voyage-log.html 129〜148行目を移植） ---------- */
+.tod-tint {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: background 2s ease;
+}
+.tod-morning .tod-tint {
+  background: linear-gradient(180deg, rgba(255, 205, 150, 0.2), rgba(255, 175, 130, 0.1));
+}
+.tod-noon .tod-tint {
+  background: transparent;
+}
+.tod-evening .tod-tint {
+  background: linear-gradient(180deg, rgba(255, 135, 70, 0.3), rgba(170, 70, 120, 0.24));
+}
+.tod-night .tod-tint {
+  background: rgba(18, 36, 78, 0.48);
+}
+.tod-midnight .tod-tint {
+  background: rgba(8, 16, 44, 0.62);
+}
+.stars {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 2s;
+  background-image: radial-gradient(1.5px 1.5px at 12% 18%, #fff 40%, transparent 60%),
+    radial-gradient(1px 1px at 28% 8%, #fff 40%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 45% 22%, #fff 40%, transparent 60%),
+    radial-gradient(1px 1px at 60% 10%, #fff 40%, transparent 60%),
+    radial-gradient(1.5px 1.5px at 76% 16%, #fff 40%, transparent 60%),
+    radial-gradient(1px 1px at 88% 6%, #fff 40%, transparent 60%),
+    radial-gradient(1px 1px at 35% 33%, #fff 40%, transparent 60%),
+    radial-gradient(1px 1px at 68% 28%, #fff 40%, transparent 60%);
+}
+.tod-night .stars {
+  opacity: 0.5;
+}
+.tod-midnight .stars {
+  opacity: 0.9;
+}
+
 /* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
 .sailing-dot {
   width: 7px;

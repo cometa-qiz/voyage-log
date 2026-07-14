@@ -24,11 +24,11 @@ export function Chart({
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
   const progress = progressOverride ?? progressOf(voyage);
   const routePathRef = useRef<SVGPathElement>(null);
-  const weather = useAmbience();
+  const { weather, timeOfDay } = useAmbience();
 
   return (
     <div className="chart-panel">
-      <div className={`chart-frame ${weather.key}`}>
+      <div className={`chart-frame ${weather.key} ${timeOfDay.key}`}>
         <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" aria-label="海図">
           <defs>
             <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
@@ -78,6 +78,8 @@ export function Chart({
         </div>
         <div className="rain" />
         <div className="flash" />
+        <div className="tod-tint" />
+        <div className="stars" />
       </div>
     </div>
   );
