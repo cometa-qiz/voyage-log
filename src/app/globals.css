@@ -48,15 +48,130 @@ body {
   transition: filter 1.5s ease;
 }
 
+/* ---------- 天候（docs/voyage-log.html .wx-sunny/.wx-cloudy/.wx-storm を移植） ---------- */
+.wx-sunny .chart-bg {
+  filter: saturate(1.05) brightness(1.02);
+}
+.wx-cloudy .chart-bg {
+  filter: saturate(0.55) brightness(0.9);
+}
+.wx-storm .chart-bg {
+  filter: saturate(0.45) brightness(0.72) hue-rotate(-12deg);
+}
+
+/* ---------- 天候オーバーレイ（docs/voyage-log.html 102〜127行目を移植） ---------- */
+.rain {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s;
+}
+.wx-storm .rain {
+  opacity: 0.5;
+}
+.rain::before {
+  content: "";
+  position: absolute;
+  inset: -60px;
+  background-image: repeating-linear-gradient(
+    105deg,
+    transparent 0 6px,
+    rgba(210, 230, 245, 0.5) 6px 7px,
+    transparent 7px 14px
+  );
+  animation: rainfall 0.5s linear infinite;
+}
+@keyframes rainfall {
+  to {
+    transform: translate(-28px, 56px);
+  }
+}
+.flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  opacity: 0;
+  pointer-events: none;
+}
+.wx-storm .flash {
+  animation: lightning 7s infinite;
+}
+@keyframes lightning {
+  0%,
+  93%,
+  100% {
+    opacity: 0;
+  }
+  94% {
+    opacity: 0.35;
+  }
+  95% {
+    opacity: 0;
+  }
+  96.5% {
+    opacity: 0.22;
+  }
+  97.5% {
+    opacity: 0;
+  }
+}
+.clouds {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1s;
+  overflow: hidden;
+}
+.wx-cloudy .clouds,
+.wx-storm .clouds {
+  opacity: 1;
+}
+.cloud {
+  position: absolute;
+  background: rgba(190, 200, 210, 0.35);
+  border-radius: 999px;
+  filter: blur(14px);
+  animation: drift linear infinite;
+}
+.wx-storm .cloud {
+  background: rgba(90, 100, 115, 0.5);
+}
+@keyframes drift {
+  from {
+    transform: translateX(-30%);
+  }
+  to {
+    transform: translateX(130%);
+  }
+}
+.glints {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.2s;
+  background: radial-gradient(
+    ellipse 40% 25% at 70% 20%,
+    rgba(255, 246, 214, 0.35),
+    transparent 70%
+  );
+}
+.wx-sunny.tod-noon .glints,
+.wx-sunny.tod-morning .glints {
+  opacity: 1;
+}
+
 /* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
 .sailing-dot {
   width: 7px;
   height: 7px;
   border-radius: 50%;
   background: #6fcf97;
-  animation: pulse 1.6s ease-in-out infinite;
+  animation: sailingPulse 1.6s ease-in-out infinite;
 }
-@keyframes pulse {
+@keyframes sailingPulse {
   0%,
   100% {
     opacity: 1;
