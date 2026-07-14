@@ -49,6 +49,35 @@ export function Chart({
           </g>
           <Ship routePathRef={routePathRef} route={route} progress={progress} />
         </svg>
+        <div className="glints" />
+        <div className="clouds">
+          <div
+            className="cloud"
+            style={{ width: 180, height: 50, top: "8%", animationDuration: "70s" }}
+          />
+          <div
+            className="cloud"
+            style={{
+              width: 240,
+              height: 60,
+              top: "30%",
+              animationDuration: "95s",
+              animationDelay: "-40s",
+            }}
+          />
+          <div
+            className="cloud"
+            style={{
+              width: 150,
+              height: 44,
+              top: "60%",
+              animationDuration: "80s",
+              animationDelay: "-20s",
+            }}
+          />
+        </div>
+        <div className="rain" />
+        <div className="flash" />
       </div>
     </div>
   );
