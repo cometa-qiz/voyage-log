@@ -23,16 +23,18 @@ function shipPoint(path: SVGPathElement, progress: number): ShipPoint {
 }
 
 // 船（船体・帆・マスト・旗）。docs/voyage-log.html の <g id="ship"> を移植。
-// 揺れ（bobbing）は実装しない。fs-sprayは全速前進演出（Phase 8）用の要素のみ用意し、
-// 表示切り替えロジックはここでは実装しない。
+// 揺れ（bobbing）は実装しない。fs-sprayは全速前進演出中（VoyagePanel側の
+// fullSpeedArrivedRef用effect）のみisFullSpeedAnimatingがtrueになり表示される。
 export function Ship({
   routePathRef,
   route,
   progress,
+  isFullSpeedAnimating = false,
 }: {
   routePathRef: RefObject<SVGPathElement | null>;
   route: Route;
   progress: number;
+  isFullSpeedAnimating?: boolean;
 }) {
   const [point, setPoint] = useState<ShipPoint | null>(null);
 
@@ -49,7 +51,11 @@ export function Ship({
   return (
     <g id="ship" transform={`translate(${point.x},${point.y}) rotate(${point.ang})`}>
       <g id="shipInner">
-        <g className="fs-spray" id="fsSpray" style={{ display: "none" }}>
+        <g
+          className="fs-spray"
+          id="fsSpray"
+          style={{ display: isFullSpeedAnimating ? undefined : "none" }}
+        >
           <line x1={-20} y1={6} x2={-34} y2={4} />
           <line x1={-20} y1={10} x2={-38} y2={11} />
           <line x1={-19} y1={13} x2={-31} y2={16} />

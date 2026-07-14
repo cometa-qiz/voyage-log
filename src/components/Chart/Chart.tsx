@@ -28,10 +28,14 @@ export function Chart({
   voyage,
   progress: progressOverride,
   activeCheer,
+  showFullspeedBanner,
+  isFullSpeedAnimating,
 }: {
   voyage: Voyage;
   progress?: number;
   activeCheer?: ActiveCheer | null;
+  showFullspeedBanner?: boolean;
+  isFullSpeedAnimating?: boolean;
 }) {
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
   const progress = progressOverride ?? progressOf(voyage);
@@ -59,7 +63,12 @@ export function Chart({
             <PortMarkers route={route} goal={voyage.goal} />
             <RoutePath route={route} progress={progress} routePathRef={routePathRef} />
           </g>
-          <Ship routePathRef={routePathRef} route={route} progress={progress} />
+          <Ship
+            routePathRef={routePathRef}
+            route={route}
+            progress={progress}
+            isFullSpeedAnimating={isFullSpeedAnimating ?? false}
+          />
         </svg>
         <div className="glints" />
         <div className="clouds">
@@ -101,6 +110,7 @@ export function Chart({
             {weather.icon} {weather.label}
           </span>
         </div>
+        {showFullspeedBanner && <div className="fullspeed-banner">全 速 前 進 ！</div>}
         {activeCheer && (
           <div
             className={`islander${activeCheer.fadeout ? " fadeout" : ""}`}
