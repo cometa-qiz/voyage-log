@@ -3,11 +3,11 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
-import { useSound } from "@/hooks/useSound";
+import { useSoundContext } from "@/components/SoundProvider";
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
-  const { muted, toggleMute } = useSound();
+  const { muted, toggleMute } = useSoundContext();
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser);

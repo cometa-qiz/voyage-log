@@ -12,7 +12,11 @@ interface WindowWithWebkitAudio extends Window {
   webkitAudioContext?: typeof AudioContext;
 }
 
-export function useSound() {
+// SoundProvider（src/components/SoundProvider.tsx）が1回だけ呼び出す実装本体。
+// コンポーネントから直接呼ぶ場合はuseSoundContext()（SoundProvider経由）を使うこと
+// （直接useSoundImpl()を複数箇所で呼ぶと、AudioContextとmuted状態のstateが
+// 呼び出し元ごとに独立してしまい、ミュート操作が他コンポーネントに反映されない）。
+export function useSoundImpl() {
   const [muted, setMuted] = useMuted();
   const audioCtxRef = useRef<AudioContext | null>(null);
 
