@@ -1,10 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Chart } from "@/components/Chart/Chart";
+import { Chart, type ActiveCheer } from "@/components/Chart/Chart";
 import { LogList } from "@/components/LogList";
+import { useSoundContext } from "@/components/SoundProvider";
 import { elapsedMs, fmtClock, fmtDur, progressOf } from "@/lib/progress";
+import { ROUTES } from "@/lib/routes";
 import type { Voyage } from "@/lib/types";
+
+// CHEERS配列（docs/voyage-log.html 840〜844行目）を移植。
+const CHEERS = [
+  "おーい！がんばれー！",
+  "いい風が吹いてるよ！",
+  "その調子だ、船長！",
+  "無理は禁物だよ〜",
+  "ゴールはもうすぐさ！",
+  "休憩も大事だぞ！",
+  "良い航海を！",
+  "ここまで来たんだね、すごい！",
+  "追い風を送るよ！",
+];
 
 // docs/voyage-log.html の statText()（1165〜1168行目）を移植。
 function statText(voyage: Voyage): string {
@@ -41,6 +56,7 @@ export function VoyagePanel({
   onDiscard,
   onDeleteLog,
   onArrive,
+  onCheer,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
@@ -48,7 +64,9 @@ export function VoyagePanel({
   onDiscard: () => void;
   onDeleteLog: (logId: string) => Promise<void>;
   onArrive: (fullSpeed: boolean) => void;
+  onCheer: (island: string) => void;
 }) {
+  const { cheer } = useSoundContext();
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -70,6 +88,26 @@ export function VoyagePanel({
   useEffect(() => {
     onArriveRef.current = onArrive;
   });
+
+  // onArriveRefと同じ理由（呼び出し側で毎レンダー新しい関数になり得るため）で
+  // onCheerもrefで保持し、下記のゾーン跨ぎ検知effectの依存配列から外す。
+  const onCheerRef = useRef(onCheer);
+  useEffect(() => {
+    onCheerRef.current = onCheer;
+  });
+
+  // showCheer()（1349〜1362行目）の吹き出し状態。fadeout開始・DOM除去相当の
+  // タイマーIDをrefで保持し、アンマウント時にクリアする（下部の専用effect）。
+  const [activeCheer, setActiveCheer] = useState<ActiveCheer | null>(null);
+  const cheerFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cheerRemoveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
+      if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
+    };
+  }, []);
 
   const targetProgress = progressOf(voyage);
 
@@ -94,6 +132,31 @@ export function VoyagePanel({
       cancelAnimationFrame(animationFrameRef.current);
       animationFrameRef.current = null;
     }
+
+    // checkIslandPass()/showCheer()（1339〜1362行目）を移植。
+    // 複数ゾーンを同時に跨いだ場合はプロトタイプのforEach同様すべて処理する
+    // （SE・onCheerは各ゾーンで発火するが、吹き出し表示は最後に処理したゾーンが残る。
+    // 通常は1つずつ跨ぐ想定のため実運用上の影響はない）。
+    const route = ROUTES[voyage.routeIndex % ROUTES.length];
+    route.zones.forEach((zone) => {
+      if (before < zone.at && after >= zone.at && !voyage.passed.includes(zone.island)) {
+        onCheerRef.current(zone.island);
+        cheer();
+
+        if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
+        if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
+
+        const message = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+        setActiveCheer({ island: zone.island, message, x: zone.x, y: zone.y, fadeout: false });
+
+        cheerFadeTimeoutRef.current = setTimeout(() => {
+          setActiveCheer((current) => (current ? { ...current, fadeout: true } : current));
+        }, 4200);
+        cheerRemoveTimeoutRef.current = setTimeout(() => {
+          setActiveCheer(null);
+        }, 5000);
+      }
+    });
 
     const allDone =
       voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
@@ -125,7 +188,7 @@ export function VoyagePanel({
         animationFrameRef.current = null;
       }
     };
-  }, [targetProgress, voyage.mode, voyage.todos]);
+  }, [targetProgress, voyage.mode, voyage.todos, voyage.passed, voyage.routeIndex, cheer]);
 
   // updateLive()内 `if(v.mode!=='free'&&v.sailing&&p>=100){anchorShip(v,true);arrive(v,false);}` を移植。
   // 時間目標モードのみが対象（無制限モードの全工程完了入港は別タスク）。
@@ -171,7 +234,7 @@ export function VoyagePanel({
 
   return (
     <>
-      <Chart voyage={voyage} progress={displayProgress} />
+      <Chart voyage={voyage} progress={displayProgress} activeCheer={activeCheer} />
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-1">

@@ -264,6 +264,17 @@ export default function Home() {
     });
   };
 
+  // checkIslandPass()（1339〜1348行目）内の`v.passed.push(z.island);save();`部分を移植。
+  // SE再生・吹き出し表示・ゾーン跨ぎ判定自体はVoyagePanel側のeffectで行い、
+  // ここではpassedへの永続化のみを担当する（Firestore書き込み完了を待たない
+  // fire-and-forgetでよい：応援表示自体は既にローカルstateで即座に行われているため）。
+  const handleCheer = (island: string) => {
+    if (!activeVoyage) return;
+    void updateVoyage(activeVoyage.id, {
+      passed: [...activeVoyage.passed, island],
+    });
+  };
+
   // toggleNotebook(force)（1239〜1250行目）を移植。閉じたら
   // `if(!open)nbVoyageId=null;`（1244行目）の通りnotebookVoyageIdをリセットし、
   // アクティブな航路の表示に戻す。
@@ -365,6 +376,7 @@ export default function Home() {
             onDiscard={() => setIsDiscardConfirmOpen(true)}
             onDeleteLog={handleDeleteLog}
             onArrive={handleArrive}
+            onCheer={handleCheer}
           />
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
