@@ -110,6 +110,13 @@ export function VoyagePanel({
   }, []);
 
   const targetProgress = progressOf(voyage);
+  // voyage.todos自体（配列参照）ではなく、その内容から導いた真偽値だけを
+  // 下記アニメーション用effectの依存配列に渡すために、ここで計算しておく
+  // （onSnapshotは内容が同じでも毎回新しい配列参照を返すため、voyage.todosを
+  // 直接依存配列に入れると無関係な書き込みのたびにeffectが再実行されてしまう。
+  // 詳細はアニメーション用effect側のコメント参照）。
+  const allDone =
+    voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
 
   // checkIslandPass()/showCheer()（1339〜1362行目）を移植。
   // 進捗アニメーション用effect（下記）とは独立した「前回チェック済み進捗」を
@@ -158,8 +165,10 @@ export function VoyagePanel({
   // 直前の表示値からease-out cubicで1秒かけて補間する。時間目標モードの毎秒更新や
   // 航路切替（VoyagePanelはkey={voyage.id}で航路ごとに再マウントされる）では
   // 即座に反映する。
-  // 依存配列はtargetProgress/voyage.mode/voyage.todosのみに限定する
-  // （voyage.passed等、進捗と無関係な値の参照変化でこのeffectを再実行させない。
+  // 依存配列はtargetProgress/voyage.mode/allDoneのみに限定する
+  // （voyage.passed・voyage.todos等、内容が変わらなくても書き込みのたびに
+  // 参照が変わってしまう値を直接依存配列に入れない。allDoneは真偽値なので
+  // 内容が実際に変わらない限り同じ値として比較され、無関係な再実行を防げる。
   // 上記の分離の理由を参照）。
   const [displayProgress, setDisplayProgress] = useState(targetProgress);
   const prevTargetRef = useRef(targetProgress);
@@ -175,8 +184,6 @@ export function VoyagePanel({
       animationFrameRef.current = null;
     }
 
-    const allDone =
-      voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
     const shouldAnimate =
       voyage.mode === "free" && !allDone && Math.abs(after - before) > 0.01;
 
@@ -205,7 +212,7 @@ export function VoyagePanel({
         animationFrameRef.current = null;
       }
     };
-  }, [targetProgress, voyage.mode, voyage.todos]);
+  }, [targetProgress, voyage.mode, allDone]);
 
   // updateLive()内 `if(v.mode!=='free'&&v.sailing&&p>=100){anchorShip(v,true);arrive(v,false);}` を移植。
   // 時間目標モードのみが対象（無制限モードの全工程完了入港は別タスク）。
