@@ -66,7 +66,7 @@ export function VoyagePanel({
   onArrive: (fullSpeed: boolean) => void;
   onCheer: (island: string) => void;
 }) {
-  const { cheer } = useSoundContext();
+  const { cheer, fullspeed } = useSoundContext();
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -102,10 +102,24 @@ export function VoyagePanel({
   const cheerFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const cheerRemoveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // fullSpeedFinish()（1631〜1674行目）関連のref/state。二重発火防止ガード
+  // （fullSpeedArrivedRef）・バナー表示state・アニメーション中フラグ・
+  // バナー非表示タイマー/rAFのIDを、下記の共通アンマウントクリーンアップeffectより
+  // 前に宣言する（宣言前の値を参照するとreact-hooks/immutabilityに抵触するため）。
+  const fullSpeedArrivedRef = useRef(false);
+  const [showFullspeedBanner, setShowFullspeedBanner] = useState(false);
+  const [isFullSpeedAnimating, setIsFullSpeedAnimating] = useState(false);
+  const fullSpeedAnimationFrameRef = useRef<number | null>(null);
+  const fullSpeedBannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   useEffect(() => {
     return () => {
       if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
       if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
+      if (fullSpeedBannerTimeoutRef.current !== null) clearTimeout(fullSpeedBannerTimeoutRef.current);
+      if (fullSpeedAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(fullSpeedAnimationFrameRef.current);
+      }
     };
   }, []);
 
@@ -174,6 +188,15 @@ export function VoyagePanel({
   const prevTargetRef = useRef(targetProgress);
   const animationFrameRef = useRef<number | null>(null);
 
+  // fullSpeedFinish()（1631〜1674行目）の起点（fromP）取得用。onArriveRefと同じ
+  // Refパターンで常に最新のdisplayProgressを保持し、下記fullSpeedArrivedRef用
+  // effectの依存配列にdisplayProgress自体（毎フレーム変化するstate）を
+  // 含めずに済むようにする。
+  const displayProgressRef = useRef(displayProgress);
+  useEffect(() => {
+    displayProgressRef.current = displayProgress;
+  });
+
   useEffect(() => {
     const before = prevTargetRef.current;
     const after = targetProgress;
@@ -184,8 +207,17 @@ export function VoyagePanel({
       animationFrameRef.current = null;
     }
 
+    // 全工程完了（allDone）の場合はこのeffectでdisplayProgressに一切触れない。
+    // 直後にfullSpeedArrivedRef用effectが全速前進アニメーションを開始する際、
+    // このタイミングのdisplayProgress（フリーズされた実際の進捗）をfromPとして
+    // 使うため、ここでsetDisplayProgress(after)により100%へスナップさせると
+    // 起点と終点が同じになりアニメーションが実質発生しなくなってしまう。
+    if (allDone) {
+      return;
+    }
+
     const shouldAnimate =
-      voyage.mode === "free" && !allDone && Math.abs(after - before) > 0.01;
+      voyage.mode === "free" && Math.abs(after - before) > 0.01;
 
     if (!shouldAnimate) {
       setDisplayProgress(after);
@@ -234,31 +266,60 @@ export function VoyagePanel({
   }, [voyage.mode, voyage.sailing, targetProgress]);
 
   // toggleTodo()内の全工程完了検知（1605〜1607行目
-  // `if(allDone&&!v.archived){setTimeout(()=>fullSpeedFinish(v,before),...)}`）を移植。
-  // allDone判定・fullSpeedFinish()呼び出しはプロトタイプ側でモードを問わず発火する
+  // `if(allDone&&!v.archived){setTimeout(()=>fullSpeedFinish(v,before),...)}`）と
+  // fullSpeedFinish()（1631〜1674行目）を移植。
+  // allDone判定・発火はプロトタイプ側でモードを問わず発火する
   // （無制限モード限定ではない。時間目標モードでも全工程チェック完了で、
   // 目標時間が残っていても入港する。status.mdの完了確認
   // 「全工程完了で入港し、時間目標モードでは目標時間が残っていても入港する」はこの仕様）。
   // 時間目標モードの経過時間100%到達（arrivedRef用effect、上記）とはトリガーが別であり、
   // 両方が同時に条件を満たすケースはv1では考慮しない。
-  // 全速前進アニメーション（fullSpeedFinish()の3秒補間）はPhase 8の別タスクのため、
-  // ここでは検知したら即座にonArrive(true)を呼ぶ（アニメーションなし）。
   // 二重発火防止はarrivedRefと同じ方針で別のrefを使う。
-  const fullSpeedArrivedRef = useRef(false);
-
   useEffect(() => {
     if (voyage.archived) return;
-    const allDone =
-      voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
     if (!allDone) return;
     if (fullSpeedArrivedRef.current) return;
     fullSpeedArrivedRef.current = true;
-    onArriveRef.current(true);
-  }, [voyage.archived, voyage.todos]);
+
+    const fromP = displayProgressRef.current;
+    fullspeed();
+    setShowFullspeedBanner(true);
+    setIsFullSpeedAnimating(true);
+
+    fullSpeedBannerTimeoutRef.current = setTimeout(() => {
+      setShowFullspeedBanner(false);
+    }, 3400);
+
+    // イージング式（1657行目）をそのまま移植。t<.4は加速区間（(t/.4)²×.25）、
+    // t>=.4は残り75%を線形補間する2段階カーブ。
+    const durationMs = 3000;
+    const startTime = performance.now();
+
+    const frame = (now: number) => {
+      const t = Math.min(1, (now - startTime) / durationMs);
+      const eased =
+        t < 0.4 ? (t / 0.4) * (t / 0.4) * 0.25 : 0.25 + ((t - 0.4) / 0.6) * 0.75;
+      setDisplayProgress(fromP + (100 - fromP) * eased);
+      if (t < 1) {
+        fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+      } else {
+        fullSpeedAnimationFrameRef.current = null;
+        setIsFullSpeedAnimating(false);
+        onArriveRef.current(true);
+      }
+    };
+    fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+  }, [voyage.archived, allDone, fullspeed]);
 
   return (
     <>
-      <Chart voyage={voyage} progress={displayProgress} activeCheer={activeCheer} />
+      <Chart
+        voyage={voyage}
+        progress={displayProgress}
+        activeCheer={activeCheer}
+        showFullspeedBanner={showFullspeedBanner}
+        isFullSpeedAnimating={isFullSpeedAnimating}
+      />
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-1">
