@@ -111,32 +111,23 @@ export function VoyagePanel({
 
   const targetProgress = progressOf(voyage);
 
-  // toggleTodo()内の無制限モード船アニメーション（1597〜1604行目
-  // `if(v.mode==='free'&&isActiveChart&&!allDone&&Math.abs(after-before)>0.01){...}`）と
-  // placeShip()/animateShipTo()（1309〜1336行目）を移植。
-  // 表示用の進捗値（displayProgress）は通常targetProgress（progressOf(voyage)）を
-  // そのまま使うが、無制限モードでの進捗変化（全工程完了時を除く・変化量0.01%超）だけ、
-  // 直前の表示値からease-out cubicで1秒かけて補間する。時間目標モードの毎秒更新や
-  // 航路切替（VoyagePanelはkey={voyage.id}で航路ごとに再マウントされる）では
-  // 即座に反映する。
-  const [displayProgress, setDisplayProgress] = useState(targetProgress);
-  const prevTargetRef = useRef(targetProgress);
-  const animationFrameRef = useRef<number | null>(null);
+  // checkIslandPass()/showCheer()（1339〜1362行目）を移植。
+  // 進捗アニメーション用effect（下記）とは独立した「前回チェック済み進捗」を
+  // 別のrefで持つ。同じrefを共有すると、応援ゾーン跨ぎ（onCheer→updateVoyage）の
+  // Firestore書き込みが引き起こすonSnapshot再取得（voyage.passed/voyage.todosの
+  // 参照がその都度新しくなる）でアニメーションeffectまで巻き込んで再実行され、
+  // 実行中のrequestAnimationFrameアニメーションがcancelAnimationFrameされた上で
+  // displayProgressが最終値へ瞬間的にスナップしてしまう不具合があったため分離した。
+  // 複数ゾーンを同時に跨いだ場合はプロトタイプのforEach同様すべて処理する
+  // （SE・onCheerは各ゾーンで発火するが、吹き出し表示は最後に処理したゾーンが残る。
+  // 通常は1つずつ跨ぐ想定のため実運用上の影響はない）。
+  const prevZoneCheckRef = useRef(targetProgress);
 
   useEffect(() => {
-    const before = prevTargetRef.current;
+    const before = prevZoneCheckRef.current;
     const after = targetProgress;
-    prevTargetRef.current = after;
+    prevZoneCheckRef.current = after;
 
-    if (animationFrameRef.current !== null) {
-      cancelAnimationFrame(animationFrameRef.current);
-      animationFrameRef.current = null;
-    }
-
-    // checkIslandPass()/showCheer()（1339〜1362行目）を移植。
-    // 複数ゾーンを同時に跨いだ場合はプロトタイプのforEach同様すべて処理する
-    // （SE・onCheerは各ゾーンで発火するが、吹き出し表示は最後に処理したゾーンが残る。
-    // 通常は1つずつ跨ぐ想定のため実運用上の影響はない）。
     const route = ROUTES[voyage.routeIndex % ROUTES.length];
     route.zones.forEach((zone) => {
       if (before < zone.at && after >= zone.at && !voyage.passed.includes(zone.island)) {
@@ -157,6 +148,32 @@ export function VoyagePanel({
         }, 5000);
       }
     });
+  }, [targetProgress, voyage.passed, voyage.routeIndex, cheer]);
+
+  // toggleTodo()内の無制限モード船アニメーション（1597〜1604行目
+  // `if(v.mode==='free'&&isActiveChart&&!allDone&&Math.abs(after-before)>0.01){...}`）と
+  // placeShip()/animateShipTo()（1309〜1336行目）を移植。
+  // 表示用の進捗値（displayProgress）は通常targetProgress（progressOf(voyage)）を
+  // そのまま使うが、無制限モードでの進捗変化（全工程完了時を除く・変化量0.01%超）だけ、
+  // 直前の表示値からease-out cubicで1秒かけて補間する。時間目標モードの毎秒更新や
+  // 航路切替（VoyagePanelはkey={voyage.id}で航路ごとに再マウントされる）では
+  // 即座に反映する。
+  // 依存配列はtargetProgress/voyage.mode/voyage.todosのみに限定する
+  // （voyage.passed等、進捗と無関係な値の参照変化でこのeffectを再実行させない。
+  // 上記の分離の理由を参照）。
+  const [displayProgress, setDisplayProgress] = useState(targetProgress);
+  const prevTargetRef = useRef(targetProgress);
+  const animationFrameRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    const before = prevTargetRef.current;
+    const after = targetProgress;
+    prevTargetRef.current = after;
+
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
 
     const allDone =
       voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
@@ -188,7 +205,7 @@ export function VoyagePanel({
         animationFrameRef.current = null;
       }
     };
-  }, [targetProgress, voyage.mode, voyage.todos, voyage.passed, voyage.routeIndex, cheer]);
+  }, [targetProgress, voyage.mode, voyage.todos]);
 
   // updateLive()内 `if(v.mode!=='free'&&v.sailing&&p>=100){anchorShip(v,true);arrive(v,false);}` を移植。
   // 時間目標モードのみが対象（無制限モードの全工程完了入港は別タスク）。
