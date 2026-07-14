@@ -207,6 +207,24 @@ body {
   opacity: 0.9;
 }
 
+/* ---------- 左上バッジ（docs/voyage-log.html .wx-badge を移植・150〜155行目） ---------- */
+.wx-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(15, 30, 44, 0.75);
+  backdrop-filter: blur(3px);
+  border: 1px solid rgba(201, 168, 92, 0.35);
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  color: #e8e3d5;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  z-index: 6;
+}
+
 /* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
 .sailing-dot {
   width: 7px;
