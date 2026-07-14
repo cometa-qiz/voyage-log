@@ -80,6 +80,15 @@ export function Chart({
         <div className="flash" />
         <div className="tod-tint" />
         <div className="stars" />
+        <div className="wx-badge">
+          <span>
+            {timeOfDay.icon} {timeOfDay.label}
+          </span>
+          <span style={{ opacity: 0.4 }}>｜</span>
+          <span>
+            {weather.icon} {weather.label}
+          </span>
+        </div>
       </div>
     </div>
   );
