@@ -3,9 +3,11 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
+import { useSound } from "@/hooks/useSound";
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
+  const { muted, toggleMute } = useSound();
 
   useEffect(() => {
     return onAuthStateChanged(auth, setUser);
@@ -21,6 +23,9 @@ export default function Header() {
 
   return (
     <header className="flex items-center justify-end gap-4 border-b border-black/[.08] bg-white px-4 py-3 dark:border-white/[.145] dark:bg-zinc-900">
+      <button type="button" onClick={toggleMute} className="btn-ghost">
+        {muted ? "🔇 消音" : "🔊 音"}
+      </button>
       <button
         type="button"
         onClick={handleSignOut}
