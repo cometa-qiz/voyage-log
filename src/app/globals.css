@@ -25,6 +25,22 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
+/* ---------- ヘッダーの装飾ボタン（docs/voyage-log.html .btn-ghost を移植・56〜60行目） ---------- */
+.btn-ghost {
+  background: transparent;
+  border: 1px solid rgba(155, 168, 176, 0.35);
+  color: #9ba8b0;
+  font-size: 12px;
+  padding: 5px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-ghost:hover {
+  border-color: #c9a85c;
+  color: #c9a85c;
+}
+
 /* ---------- Chart panel（docs/voyage-log.html .chart-panel/.chart-frame を移植） ---------- */
 .chart-panel {
   background: #17293a;

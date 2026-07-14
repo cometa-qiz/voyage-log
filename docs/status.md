@@ -209,8 +209,8 @@
 
 ### SE（`useSound`）
 - [ ] Web Audio APIの `tone()` / `bell()` 合成を移植し、SE9種（depart / anchor / write / todoDone / todoUndo / cheer / fullspeed / treasure / arrive）を各操作に接続する
-- [ ] ミュート切替（🔊／🔇・ローカル保存）を実装する
-- [ ] AudioContextをユーザー操作後に生成・resumeする（iOS対策）
+- [x] ミュート切替（🔊／🔇・ローカル保存）を実装する
+- [x] AudioContextをユーザー操作後に生成・resumeする（iOS対策）
 
 ### 島の応援
 - [ ] 応援ゾーン跨ぎ検知＋吹き出し表示（9メッセージからランダム・約4秒・SE付き）を実装する
