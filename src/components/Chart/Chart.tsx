@@ -11,15 +11,27 @@ import { ROUTES } from "@/lib/routes";
 import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
+// showCheer()の吹き出し表示状態。VoyagePanel側のゾーン跨ぎ検知effectが生成し、
+// このコンポーネントは受け取って.islander要素として描画するだけ。
+export interface ActiveCheer {
+  island: string;
+  message: string;
+  x: number;
+  y: number;
+  fadeout: boolean;
+}
+
 // progressはオプショナル。渡されなければprogressOf(voyage)を内部計算する
 // （従来通りの挙動）。渡された場合はそちらを優先する。呼び出し側（VoyagePanel）が
 // 無制限モードの船アニメーション中に補間値を渡すために使う。
 export function Chart({
   voyage,
   progress: progressOverride,
+  activeCheer,
 }: {
   voyage: Voyage;
   progress?: number;
+  activeCheer?: ActiveCheer | null;
 }) {
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
   const progress = progressOverride ?? progressOf(voyage);
@@ -89,6 +101,18 @@ export function Chart({
             {weather.icon} {weather.label}
           </span>
         </div>
+        {activeCheer && (
+          <div
+            className={`islander${activeCheer.fadeout ? " fadeout" : ""}`}
+            style={{
+              left: `${(activeCheer.x / 1000) * 100}%`,
+              top: `${(activeCheer.y / 620) * 100}%`,
+            }}
+          >
+            <span className="who">{activeCheer.island}のみんな</span>
+            {activeCheer.message}
+          </div>
+        )}
       </div>
     </div>
   );

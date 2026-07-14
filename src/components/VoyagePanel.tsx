@@ -1,10 +1,25 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Chart } from "@/components/Chart/Chart";
+import { Chart, type ActiveCheer } from "@/components/Chart/Chart";
 import { LogList } from "@/components/LogList";
+import { useSoundContext } from "@/components/SoundProvider";
 import { elapsedMs, fmtClock, fmtDur, progressOf } from "@/lib/progress";
+import { ROUTES } from "@/lib/routes";
 import type { Voyage } from "@/lib/types";
+
+// CHEERS配列（docs/voyage-log.html 840〜844行目）を移植。
+const CHEERS = [
+  "おーい！がんばれー！",
+  "いい風が吹いてるよ！",
+  "その調子だ、船長！",
+  "無理は禁物だよ〜",
+  "ゴールはもうすぐさ！",
+  "休憩も大事だぞ！",
+  "良い航海を！",
+  "ここまで来たんだね、すごい！",
+  "追い風を送るよ！",
+];
 
 // docs/voyage-log.html の statText()（1165〜1168行目）を移植。
 function statText(voyage: Voyage): string {
@@ -41,6 +56,7 @@ export function VoyagePanel({
   onDiscard,
   onDeleteLog,
   onArrive,
+  onCheer,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
@@ -48,7 +64,9 @@ export function VoyagePanel({
   onDiscard: () => void;
   onDeleteLog: (logId: string) => Promise<void>;
   onArrive: (fullSpeed: boolean) => void;
+  onCheer: (island: string) => void;
 }) {
+  const { cheer } = useSoundContext();
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -71,7 +89,73 @@ export function VoyagePanel({
     onArriveRef.current = onArrive;
   });
 
+  // onArriveRefと同じ理由（呼び出し側で毎レンダー新しい関数になり得るため）で
+  // onCheerもrefで保持し、下記のゾーン跨ぎ検知effectの依存配列から外す。
+  const onCheerRef = useRef(onCheer);
+  useEffect(() => {
+    onCheerRef.current = onCheer;
+  });
+
+  // showCheer()（1349〜1362行目）の吹き出し状態。fadeout開始・DOM除去相当の
+  // タイマーIDをrefで保持し、アンマウント時にクリアする（下部の専用effect）。
+  const [activeCheer, setActiveCheer] = useState<ActiveCheer | null>(null);
+  const cheerFadeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const cheerRemoveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
+      if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
+    };
+  }, []);
+
   const targetProgress = progressOf(voyage);
+  // voyage.todos自体（配列参照）ではなく、その内容から導いた真偽値だけを
+  // 下記アニメーション用effectの依存配列に渡すために、ここで計算しておく
+  // （onSnapshotは内容が同じでも毎回新しい配列参照を返すため、voyage.todosを
+  // 直接依存配列に入れると無関係な書き込みのたびにeffectが再実行されてしまう。
+  // 詳細はアニメーション用effect側のコメント参照）。
+  const allDone =
+    voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
+
+  // checkIslandPass()/showCheer()（1339〜1362行目）を移植。
+  // 進捗アニメーション用effect（下記）とは独立した「前回チェック済み進捗」を
+  // 別のrefで持つ。同じrefを共有すると、応援ゾーン跨ぎ（onCheer→updateVoyage）の
+  // Firestore書き込みが引き起こすonSnapshot再取得（voyage.passed/voyage.todosの
+  // 参照がその都度新しくなる）でアニメーションeffectまで巻き込んで再実行され、
+  // 実行中のrequestAnimationFrameアニメーションがcancelAnimationFrameされた上で
+  // displayProgressが最終値へ瞬間的にスナップしてしまう不具合があったため分離した。
+  // 複数ゾーンを同時に跨いだ場合はプロトタイプのforEach同様すべて処理する
+  // （SE・onCheerは各ゾーンで発火するが、吹き出し表示は最後に処理したゾーンが残る。
+  // 通常は1つずつ跨ぐ想定のため実運用上の影響はない）。
+  const prevZoneCheckRef = useRef(targetProgress);
+
+  useEffect(() => {
+    const before = prevZoneCheckRef.current;
+    const after = targetProgress;
+    prevZoneCheckRef.current = after;
+
+    const route = ROUTES[voyage.routeIndex % ROUTES.length];
+    route.zones.forEach((zone) => {
+      if (before < zone.at && after >= zone.at && !voyage.passed.includes(zone.island)) {
+        onCheerRef.current(zone.island);
+        cheer();
+
+        if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
+        if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
+
+        const message = CHEERS[Math.floor(Math.random() * CHEERS.length)];
+        setActiveCheer({ island: zone.island, message, x: zone.x, y: zone.y, fadeout: false });
+
+        cheerFadeTimeoutRef.current = setTimeout(() => {
+          setActiveCheer((current) => (current ? { ...current, fadeout: true } : current));
+        }, 4200);
+        cheerRemoveTimeoutRef.current = setTimeout(() => {
+          setActiveCheer(null);
+        }, 5000);
+      }
+    });
+  }, [targetProgress, voyage.passed, voyage.routeIndex, cheer]);
 
   // toggleTodo()内の無制限モード船アニメーション（1597〜1604行目
   // `if(v.mode==='free'&&isActiveChart&&!allDone&&Math.abs(after-before)>0.01){...}`）と
@@ -81,6 +165,11 @@ export function VoyagePanel({
   // 直前の表示値からease-out cubicで1秒かけて補間する。時間目標モードの毎秒更新や
   // 航路切替（VoyagePanelはkey={voyage.id}で航路ごとに再マウントされる）では
   // 即座に反映する。
+  // 依存配列はtargetProgress/voyage.mode/allDoneのみに限定する
+  // （voyage.passed・voyage.todos等、内容が変わらなくても書き込みのたびに
+  // 参照が変わってしまう値を直接依存配列に入れない。allDoneは真偽値なので
+  // 内容が実際に変わらない限り同じ値として比較され、無関係な再実行を防げる。
+  // 上記の分離の理由を参照）。
   const [displayProgress, setDisplayProgress] = useState(targetProgress);
   const prevTargetRef = useRef(targetProgress);
   const animationFrameRef = useRef<number | null>(null);
@@ -95,8 +184,6 @@ export function VoyagePanel({
       animationFrameRef.current = null;
     }
 
-    const allDone =
-      voyage.todos.length > 0 && voyage.todos.every((todo) => todo.done);
     const shouldAnimate =
       voyage.mode === "free" && !allDone && Math.abs(after - before) > 0.01;
 
@@ -125,7 +212,7 @@ export function VoyagePanel({
         animationFrameRef.current = null;
       }
     };
-  }, [targetProgress, voyage.mode, voyage.todos]);
+  }, [targetProgress, voyage.mode, allDone]);
 
   // updateLive()内 `if(v.mode!=='free'&&v.sailing&&p>=100){anchorShip(v,true);arrive(v,false);}` を移植。
   // 時間目標モードのみが対象（無制限モードの全工程完了入港は別タスク）。
@@ -171,7 +258,7 @@ export function VoyagePanel({
 
   return (
     <>
-      <Chart voyage={voyage} progress={displayProgress} />
+      <Chart voyage={voyage} progress={displayProgress} activeCheer={activeCheer} />
 
       <div className="flex flex-col gap-1">
         <div className="flex items-baseline gap-1">
