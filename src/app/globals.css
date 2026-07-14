@@ -48,6 +48,17 @@ body {
   transition: filter 1.5s ease;
 }
 
+/* ---------- 天候（docs/voyage-log.html .wx-sunny/.wx-cloudy/.wx-storm を移植） ---------- */
+.wx-sunny .chart-bg {
+  filter: saturate(1.05) brightness(1.02);
+}
+.wx-cloudy .chart-bg {
+  filter: saturate(0.55) brightness(0.9);
+}
+.wx-storm .chart-bg {
+  filter: saturate(0.45) brightness(0.72) hue-rotate(-12deg);
+}
+
 /* ---------- タブの航行中インジケータ（docs/voyage-log.html .sailing-dot を移植） ---------- */
 .sailing-dot {
   width: 7px;

@@ -6,6 +6,7 @@ import { GoalIsland } from "./GoalIsland";
 import { PortMarkers } from "./PortMarkers";
 import { RoutePath } from "./RoutePath";
 import { Ship } from "@/components/Ship/Ship";
+import { useAmbience } from "@/hooks/useAmbience";
 import { ROUTES } from "@/lib/routes";
 import { progressOf } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
@@ -23,10 +24,11 @@ export function Chart({
   const route = ROUTES[voyage.routeIndex % ROUTES.length];
   const progress = progressOverride ?? progressOf(voyage);
   const routePathRef = useRef<SVGPathElement>(null);
+  const weather = useAmbience();
 
   return (
     <div className="chart-panel">
-      <div className="chart-frame">
+      <div className={`chart-frame ${weather.key}`}>
         <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" aria-label="海図">
           <defs>
             <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
