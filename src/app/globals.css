@@ -65,9 +65,9 @@ body {
   height: 7px;
   border-radius: 50%;
   background: #6fcf97;
-  animation: pulse 1.6s ease-in-out infinite;
+  animation: sailingPulse 1.6s ease-in-out infinite;
 }
-@keyframes pulse {
+@keyframes sailingPulse {
   0%,
   100% {
     opacity: 1;
