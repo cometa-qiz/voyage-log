@@ -108,7 +108,7 @@
 - [x] `pnpm add -D firebase-tools` で導入する
 - [x] `package.json` の `scripts` に `firebase:login` / `firebase:init` / `deploy`（`firebase deploy --only hosting`）を追加する
 - [x] `firebase init hosting` を実行し `firebase.json` の `public` が `"out"` になっていることを確認する
-- [ ] `pnpm build` → `pnpm deploy` でデプロイする
+- [x] `pnpm build` → `pnpm deploy` でデプロイする
 
 ### ✅ 完了確認
 - [x] 公開URLでGoogleサインイン→海図（ダミー航路）が表示される
