@@ -1010,6 +1010,78 @@ header h1 {
   color: rgba(155, 168, 176, 0.25);
 }
 
+/* ---------- Todoドック（画面左端・クリックで出し入れ）（docs/voyage-log.html
+   .todo-dock〜.td-tab・171〜206行目を移植） ---------- */
+.todo-dock {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 39;
+  display: flex;
+  align-items: stretch;
+  cursor: pointer;
+  transition: transform 0.35s cubic-bezier(0.3, 1, 0.4, 1);
+  user-select: none;
+}
+.todo-dock.closed {
+  transform: translateY(-50%) translateX(calc(30px - 100%));
+}
+.td-panel {
+  background: rgba(23, 41, 58, 0.94);
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(201, 168, 92, 0.5);
+  border-left: none;
+  padding: 14px 16px;
+  width: min(230px, 60vw);
+  box-shadow: 6px 0 24px rgba(0, 0, 0, 0.35);
+}
+.td-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  color: var(--gold);
+  margin-bottom: 8px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed rgba(201, 168, 92, 0.35);
+}
+.td-item {
+  font-size: 12.5px;
+  color: var(--gold);
+  line-height: 1.7;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.td-more {
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-top: 2px;
+}
+.td-done-all {
+  font-size: 12px;
+  color: var(--text-dim);
+}
+.td-tab {
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 30px;
+  padding: 14px 0;
+  background: linear-gradient(180deg, #a8863c, var(--gold));
+  color: #1a1408;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  border-radius: 0 10px 10px 0;
+  border: 1px solid rgba(201, 168, 92, 0.6);
+  border-left: none;
+  box-shadow: 4px 0 14px rgba(0, 0, 0, 0.3);
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+}
+
 /* ---------- 航行中タイマー表示（sail-badgeへの構造変更はスコープ外。
    色とフォントのみプロトタイプのmonospace系表記に合わせる軽微な調整） ---------- */
 .sail-clock {
