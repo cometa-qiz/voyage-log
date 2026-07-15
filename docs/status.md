@@ -208,9 +208,8 @@
 - [x] 左上バッジ（時間帯＋天候）を実装する
 
 ### SE（`useSound`）
-- [ ] Web Audio APIの `tone()` / `bell()` 合成を移植し、SE9種（depart / anchor / write / todoDone / todoUndo / cheer / fullspeed / treasure / arrive）を各操作に接続する
-  - 接続済み（6種）: depart / anchor（出航・停泊） / write（記帳・工程追加） / todoDone / todoUndo（工程チェック切替） / treasure（工程宝・入港宝）
-  - 未接続（3種）: cheer（島の応援）・fullspeed（全速前進）・arrive（入港）は演出自体が未実装のため、それぞれの演出実装タスクで接続する。`useSound.ts`には関数のみ用意済み
+- [x] Web Audio APIの `tone()` / `bell()` 合成を移植し、SE9種（depart / anchor / write / todoDone / todoUndo / cheer / fullspeed / treasure / arrive）を各操作に接続する
+  - 全9種接続済み: depart/anchor（出航・停泊）・write（記帳・工程追加）・todoDone/todoUndo（工程チェック切替）・treasure（工程宝・入港宝）はpage.tsx、cheer（島の応援）・fullspeed（全速前進）はVoyagePanel.tsxで接続
 - [x] ミュート切替（🔊／🔇・ローカル保存）を実装する
 - [x] AudioContextをユーザー操作後に生成・resumeする（iOS対策）
 
