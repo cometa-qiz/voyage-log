@@ -935,6 +935,81 @@ header h1 {
   border-radius: 8px;
 }
 
+/* ---------- Treasure collection（docs/voyage-log.html .collection-panel〜.t-cell.unowned .t-count・407〜441行目を移植） ---------- */
+.collection-panel {
+  background: var(--navy);
+  border: 1px solid rgba(201, 168, 92, 0.3);
+  border-radius: var(--radius);
+  padding: 22px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+.coll-summary {
+  display: flex;
+  gap: 26px;
+  flex-wrap: wrap;
+  margin-bottom: 18px;
+  font-family: Consolas, monospace;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.coll-summary b {
+  color: var(--gold);
+  font-size: 17px;
+}
+.treasure-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 10px;
+}
+.t-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border: 1px solid rgba(155, 168, 176, 0.2);
+  background: rgba(15, 30, 44, 0.6);
+  transition: 0.2s;
+}
+.t-cell.owned {
+  border-color: rgba(201, 168, 92, 0.55);
+  background:
+    radial-gradient(ellipse 90% 70% at 50% 20%, rgba(201, 168, 92, 0.16), transparent),
+    rgba(30, 26, 15, 0.7);
+  box-shadow: inset 0 0 20px rgba(201, 168, 92, 0.08);
+}
+.t-cell.owned:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 6px 16px rgba(201, 168, 92, 0.25);
+}
+.t-letter {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", Georgia, serif;
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1;
+  background: linear-gradient(160deg, #f5e3a8, #c9a85c 45%, #8e6f2e);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.5));
+}
+.t-cell.unowned .t-letter {
+  background: none;
+  color: rgba(155, 168, 176, 0.22);
+  filter: none;
+}
+.t-count {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--gold);
+}
+.t-cell.unowned .t-count {
+  color: rgba(155, 168, 176, 0.25);
+}
+
 /* ---------- 航行中タイマー表示（sail-badgeへの構造変更はスコープ外。
    色とフォントのみプロトタイプのmonospace系表記に合わせる軽微な調整） ---------- */
 .sail-clock {
