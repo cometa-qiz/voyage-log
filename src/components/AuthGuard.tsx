@@ -35,8 +35,8 @@ export default function AuthGuard({
 
   if (isLoading) {
     return (
-      <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
-        <p className="text-sm text-zinc-500 dark:text-zinc-400">読み込み中...</p>
+      <div className="flex flex-1 items-center justify-center">
+        <p style={{ color: "var(--text-dim)" }}>読み込み中...</p>
       </div>
     );
   }
