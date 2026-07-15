@@ -105,6 +105,61 @@ header h1 {
   color: #c9a85c;
 }
 
+/* ---------- Tabs（docs/voyage-log.html .tabs〜.tab-treasure.active・63〜81行目を移植。
+   プロトタイプでは.tabsは.app（39行目・padding:20px 16px 60px）の内側にあるため、
+   headerと同様に.appの左右padding(16px)を合成し、max-width:1060px;margin:0 auto を
+   付与して<header>/<main>と横幅・中心を揃えている ---------- */
+.tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  max-width: 1060px;
+  margin: 0 auto 14px;
+  padding: 0 16px 10px;
+  scrollbar-width: thin;
+  -webkit-overflow-scrolling: touch;
+}
+.tab {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--navy);
+  border: 1px solid rgba(155, 168, 176, 0.2);
+  border-radius: 999px;
+  padding: 7px 16px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-size: 13px;
+  color: var(--text-dim);
+  white-space: nowrap;
+}
+.tab:hover {
+  border-color: rgba(201, 168, 92, 0.5);
+}
+.tab.active {
+  background: var(--navy-light);
+  border-color: var(--gold);
+  color: var(--text);
+  box-shadow: 0 0 0 1px rgba(201, 168, 92, 0.25);
+}
+.tab .pct {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--magenta-soft);
+}
+.tab-new {
+  border-style: dashed;
+  color: var(--gold);
+}
+.tab-treasure {
+  border-color: rgba(201, 168, 92, 0.5);
+  color: var(--gold);
+}
+.tab-treasure.active {
+  background: linear-gradient(160deg, #3a2f16, #2a2314);
+}
+
 /* ---------- Chart panel（docs/voyage-log.html .chart-panel/.chart-frame を移植） ---------- */
 .chart-panel {
   background: #17293a;
@@ -511,6 +566,147 @@ header h1 {
     transform: scale(0.2) rotate(-16deg);
     opacity: 0;
   }
+}
+
+/* ---------- Stats（docs/voyage-log.html .stats〜.stat b・228〜246行目を移植） ---------- */
+.stats {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 16px;
+  align-items: center;
+  margin-top: 14px;
+}
+.pct-big {
+  font-family: Consolas, monospace;
+  font-size: 34px;
+  font-weight: 700;
+  color: var(--gold);
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+.pct-big small {
+  font-size: 16px;
+  color: var(--text-dim);
+  font-weight: 400;
+}
+.progress-track {
+  height: 8px;
+  background: rgba(155, 168, 176, 0.15);
+  border-radius: 99px;
+  overflow: hidden;
+  min-width: 120px;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--magenta), var(--gold));
+  transition: width 0.9s linear;
+}
+.stat {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: right;
+  white-space: nowrap;
+}
+.stat b {
+  display: block;
+  font-size: 15px;
+  color: var(--text);
+  font-family: Consolas, monospace;
+  font-weight: 600;
+}
+
+/* ---------- Buttons（docs/voyage-log.html .log-row〜.btn-secondary:hover・249〜277行目を移植。
+   .btn-pomoはポモドーロ機能が本実装で予約フィールドのため対象外） ---------- */
+.log-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.btn-primary {
+  flex: 2;
+  min-width: 180px;
+  background: linear-gradient(160deg, #8e2f66, var(--magenta));
+  border: none;
+  border-radius: var(--radius);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  padding: 14px 20px;
+  cursor: pointer;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  box-shadow: 0 4px 16px rgba(194, 65, 140, 0.3);
+  transition: 0.2s;
+}
+.btn-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(194, 65, 140, 0.42);
+}
+.btn-primary.anchored {
+  background: linear-gradient(160deg, #2c6b68, var(--teal));
+  box-shadow: 0 4px 16px rgba(62, 142, 139, 0.3);
+}
+.btn-note {
+  flex: 1;
+  min-width: 120px;
+  background: var(--navy-light);
+  border: 1px solid rgba(201, 168, 92, 0.4);
+  color: var(--gold);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  letter-spacing: 0.08em;
+}
+.btn-note:hover {
+  border-color: var(--gold);
+  background: rgba(201, 168, 92, 0.1);
+}
+.btn-secondary {
+  background: var(--navy-light);
+  border: 1px solid rgba(155, 168, 176, 0.3);
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  padding: 14px 18px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-secondary:hover {
+  border-color: var(--danger);
+  color: #e2a090;
+}
+
+/* ---------- Logbook（docs/voyage-log.html .logbook/.section-title・365〜371行目を移植） ---------- */
+.logbook {
+  margin-top: 26px;
+}
+.section-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 15px;
+  letter-spacing: 0.3em;
+  color: var(--gold);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.section-title::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: rgba(201, 168, 92, 0.25);
+}
+
+/* ---------- 航行中タイマー表示（sail-badgeへの構造変更はスコープ外。
+   色とフォントのみプロトタイプのmonospace系表記に合わせる軽微な調整） ---------- */
+.sail-clock {
+  color: var(--text-dim);
+  font-family: Consolas, monospace;
 }
 
 /* ---------- docs/voyage-log.html 549〜551行目を移植 ---------- */

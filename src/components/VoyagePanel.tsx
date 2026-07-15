@@ -340,57 +340,50 @@ export function VoyagePanel({
         isFullSpeedAnimating={isFullSpeedAnimating}
       />
 
-      <div className="flex flex-col gap-1">
-        <div className="flex items-baseline gap-1">
-          <span className="font-mono text-2xl text-black dark:text-zinc-50">
-            {displayProgress.toFixed(1)}
-          </span>
-          <span className="text-sm text-zinc-500 dark:text-zinc-400">%</span>
+      <div className="stats">
+        <div className="pct-big">
+          {displayProgress.toFixed(1)}
+          <small>%</small>
         </div>
-        <div className="h-2 w-full overflow-hidden rounded-full bg-black/[.08] dark:bg-white/[.145]">
+        <div className="progress-track">
           <div
-            className="h-full bg-foreground"
+            className="progress-fill"
             style={{ width: `${Math.min(100, displayProgress)}%` }}
           />
         </div>
-        <div className="text-sm text-zinc-500 dark:text-zinc-400">
-          {statText(voyage)}
+        <div className="stat">
+          {voyage.mode === "free" ? "航行時間" : "航行距離"}
+          <b>{statText(voyage)}</b>
         </div>
-        {voyage.sailing && voyage.sailStart !== null && (
-          <div className="font-mono text-sm text-zinc-500 dark:text-zinc-400">
-            {fmtClock(sailingClockMs(voyage))}
-          </div>
-        )}
+        <div className="stat">
+          出航回数
+          <b>{voyage.sessions.length + (voyage.sailing ? 1 : 0)} 回</b>
+        </div>
       </div>
+      {voyage.sailing && voyage.sailStart !== null && (
+        <div className="sail-clock text-sm">
+          {fmtClock(sailingClockMs(voyage))}
+        </div>
+      )}
 
-      <div className="flex gap-2">
+      <div className="log-row">
         <button
           type="button"
           onClick={onToggleSail}
-          className="w-fit rounded-full bg-foreground px-5 py-2 text-sm text-background"
+          className={`btn-primary${voyage.sailing ? " anchored" : ""}`}
         >
           {voyage.sailing ? "⚓ 停泊する" : "⛵ 出航する"}
         </button>
-        <button
-          type="button"
-          onClick={onOpenNote}
-          className="w-fit rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
-        >
+        <button type="button" onClick={onOpenNote} className="btn-note">
           ✎ 記帳する
         </button>
-        <button
-          type="button"
-          onClick={onDiscard}
-          className="w-fit rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
-        >
+        <button type="button" onClick={onDiscard} className="btn-secondary">
           破棄
         </button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-sm font-semibold tracking-widest text-black dark:text-zinc-50">
-          航 海 日 誌
-        </h3>
+      <div className="logbook">
+        <div className="section-title">航 海 日 誌</div>
         <LogList logs={voyage.logs} onDeleteLog={onDeleteLog} />
       </div>
     </>
