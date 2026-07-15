@@ -22,7 +22,7 @@ export function TabBar({
   onOpenNewVoyage: () => void;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-2 overflow-x-auto p-4">
+    <div className="tabs">
       {voyages.map((voyage) => {
         const isActive = view === "chart" && voyage.id === activeId;
         return (
@@ -30,11 +30,7 @@ export function TabBar({
             key={voyage.id}
             type="button"
             onClick={() => onSelectVoyage(voyage.id)}
-            className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm whitespace-nowrap ${
-              isActive
-                ? "border-foreground bg-foreground text-background"
-                : "border-black/[.08] dark:border-white/[.145]"
-            }`}
+            className={`tab${isActive ? " active" : ""}`}
           >
             {voyage.sailing ? (
               <span className="sailing-dot" />
@@ -42,7 +38,7 @@ export function TabBar({
               <span>⛵</span>
             )}
             <span>{voyage.name}</span>
-            <span className="font-mono text-xs">
+            <span className="pct">
               {voyage.mode === "free" ? "♾" : ""}
               {Math.floor(progressOf(voyage))}%
             </span>
@@ -50,24 +46,16 @@ export function TabBar({
         );
       })}
 
-      <button
-        type="button"
-        onClick={onOpenNewVoyage}
-        className="rounded-full border border-dashed border-black/[.08] px-4 py-1.5 text-sm whitespace-nowrap dark:border-white/[.145]"
-      >
+      <button type="button" onClick={onOpenNewVoyage} className="tab tab-new">
         ＋ 新しい航路
       </button>
 
       <button
         type="button"
         onClick={onSelectCollection}
-        className={`flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm whitespace-nowrap ${
-          view === "collection"
-            ? "border-foreground bg-foreground text-background"
-            : "border-black/[.08] dark:border-white/[.145]"
-        }`}
+        className={`tab tab-treasure${view === "collection" ? " active" : ""}`}
       >
-        🪙 宝物庫 <span className="font-mono text-xs">{treasureCount}</span>
+        🪙 宝物庫 <span className="pct">{treasureCount}</span>
       </button>
     </div>
   );
