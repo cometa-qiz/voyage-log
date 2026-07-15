@@ -309,6 +309,13 @@ export function VoyagePanel({
       }
     };
     fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+
+    return () => {
+      if (fullSpeedAnimationFrameRef.current !== null) {
+        cancelAnimationFrame(fullSpeedAnimationFrameRef.current);
+        fullSpeedAnimationFrameRef.current = null;
+      }
+    };
   }, [voyage.archived, allDone, fullspeed]);
 
   return (

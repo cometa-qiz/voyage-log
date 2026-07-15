@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useVoyages } from "@/hooks/useVoyages";
 import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
@@ -20,6 +20,26 @@ import type { Voyage } from "@/lib/types";
 // プロトタイプのuid()と同じ生成方式（Date.now()のbase36＋乱数）
 function genId(): string {
   return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+}
+
+// arrive()内の紙吹雪生成（1691〜1699行目）を移植。50個・5色・left/duration/delayの
+// 数値範囲はプロトタイプのまま。DOM操作ではなく、配列を1回だけ生成してmapで描画する。
+interface ConfettiPiece {
+  left: string;
+  color: string;
+  animationDuration: string;
+  animationDelay: string;
+}
+
+const CONFETTI_COLORS = ["#C2418C", "#C9A85C", "#F4EFE2", "#BFDDE8", "#D77BB2"];
+
+function generateConfetti(): ConfettiPiece[] {
+  return Array.from({ length: 50 }, (_, i) => ({
+    left: `${Math.random() * 100}vw`,
+    color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    animationDuration: `${2.2 + Math.random() * 2}s`,
+    animationDelay: `${Math.random() * 0.8}s`,
+  }));
 }
 
 // anchorShip(v)（停泊確定：accumMs・sessions・sailing/sailStart・自動記帳）を移植。
@@ -75,6 +95,26 @@ export default function Home() {
     letter: string;
     achievedCount: number;
   } | null>(null);
+  // arrive()内の`setTimeout(()=>SE.treasure(),1600)`（1688行目）を移植する
+  // タイマーIDの保持先。setArrivedVoyage(null)（入港カードを閉じる）または
+  // アンマウント時に、鳴っていない戦利品SEが遅れて鳴らないようクリアする。
+  const treasureSoundTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  useEffect(() => {
+    return () => {
+      if (treasureSoundTimeoutRef.current !== null) {
+        clearTimeout(treasureSoundTimeoutRef.current);
+      }
+    };
+  }, []);
+  // 紙吹雪はarrivedVoyageがセットされた（＝新しい入港が発生した）タイミングでのみ
+  // 1回生成する。再レンダーのたびに再生成しないようarrivedVoyage.idに依存させる。
+  const arrivedVoyageId = arrivedVoyage?.id ?? null;
+  const confetti = useMemo(
+    () => (arrivedVoyageId ? generateConfetti() : []),
+    [arrivedVoyageId],
+  );
   // nbVoyageId相当。手帳が「完了した航海」の📖ボタンから開かれている場合に
   // 対象航路のidを保持する（null時はアクティブな航路に追従）。
   const [notebookVoyageId, setNotebookVoyageId] = useState<string | null>(
@@ -304,7 +344,9 @@ export default function Home() {
   // 持つ必要はない。全速前進アニメーション・紙吹雪・SEはPhase 7/8の別タスク。
   const handleArrive = async (fullSpeed: boolean) => {
     if (!activeVoyage) return;
-    // arrive()冒頭の `closeModal('treasureModal');`（1679行目）を移植。
+    // arrive()冒頭の `SE.arrive();`（1678行目）を移植。
+    sound.arrive();
+    // arrive()内の `closeModal('treasureModal');`（1679行目）を移植。
     // 工程が3の倍数個の航路で最後の1件をチェックすると、工程宝獲得と全工程完了入港が
     // 同一操作内で同時に発生しうる。入港処理を優先し、開いていた工程宝獲得モーダルは
     // 強制的に閉じる。
@@ -318,7 +360,14 @@ export default function Home() {
       sessionCount = activeVoyage.sessions.length + 1;
     }
     const treasure = await grantTreasure("goal");
-    sound.treasure();
+    // `setTimeout(()=>SE.treasure(),1600)`（1688行目）を移植。
+    if (treasureSoundTimeoutRef.current !== null) {
+      clearTimeout(treasureSoundTimeoutRef.current);
+    }
+    treasureSoundTimeoutRef.current = setTimeout(() => {
+      sound.treasure();
+      treasureSoundTimeoutRef.current = null;
+    }, 1600);
     setArrivedVoyage({
       id: activeVoyage.id,
       name: activeVoyage.name,
@@ -334,6 +383,12 @@ export default function Home() {
   // 閉じた航路がactiveIdならリセットする。
   const handleCloseArrival = async () => {
     if (!arrivedVoyage) return;
+    // 入港カードを閉じた時点で、未再生の戦利品SEタイマーが残っていれば
+    // 鳴らさずに破棄する（不要な遅延SE対策）。
+    if (treasureSoundTimeoutRef.current !== null) {
+      clearTimeout(treasureSoundTimeoutRef.current);
+      treasureSoundTimeoutRef.current = null;
+    }
     await updateVoyage(arrivedVoyage.id, {
       archived: true,
       archivedAt: Date.now(),
@@ -434,31 +489,35 @@ export default function Home() {
       />
 
       {arrivedVoyage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="flex w-full max-w-md flex-col items-center gap-4 rounded-lg bg-white p-6 text-center dark:bg-zinc-900">
-            <div className="text-4xl">{arrivedVoyage.fullSpeed ? "🚩" : "⚓"}</div>
-            <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-              {arrivedVoyage.fullSpeed ? "全工程踏破・入港" : "入 港"}
-            </h2>
-            <p className="text-sm text-black dark:text-zinc-50">
+        <div className="arrival">
+          {confetti.map((piece, i) => (
+            <div
+              key={i}
+              className="confetti"
+              style={{
+                left: piece.left,
+                background: piece.color,
+                animationDuration: piece.animationDuration,
+                animationDelay: piece.animationDelay,
+              }}
+            />
+          ))}
+          <div className="arrival-card">
+            <div className="flag">{arrivedVoyage.fullSpeed ? "🚩" : "⚓"}</div>
+            <h2>{arrivedVoyage.fullSpeed ? "全工程踏破・入港" : "入 港"}</h2>
+            <p>
               {arrivedVoyage.fullSpeed
                 ? `全ての工程を終え、「${arrivedVoyage.name}」号は全速力で ${arrivedVoyage.goal} に入港！ 総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`
                 : `「${arrivedVoyage.name}」号、${arrivedVoyage.goal} に到着。総航行 ${fmtDur(arrivedVoyage.accumMs)}・出航${arrivedVoyage.sessionCount}回の航海でした。`}
             </p>
             {arrivedVoyage.lootLetter && (
-              <p className="text-sm text-black dark:text-zinc-50">
+              <div className="arrival-loot">
                 入港の戦利品：
-                <span className="font-semibold text-amber-600 dark:text-amber-400">
-                  {arrivedVoyage.lootLetter}
-                </span>
-              </p>
+                <span className="loot-letter">{arrivedVoyage.lootLetter}</span>
+              </div>
             )}
-            <button
-              type="button"
-              onClick={handleCloseArrival}
-              className="w-fit rounded-full bg-foreground px-5 py-2 text-sm text-background"
-            >
-              閉じる
+            <button type="button" onClick={handleCloseArrival} className="btn-ok">
+              航海を記録に残す
             </button>
           </div>
         </div>
