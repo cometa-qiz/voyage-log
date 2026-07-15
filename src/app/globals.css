@@ -77,6 +77,15 @@ header h1 {
   font-weight: 600;
   color: var(--text);
 }
+/* .login-titleはプロトタイプに存在しないログイン画面独自のクラス。
+   header h1と同じ値（フォント・文字間隔・色）をそのまま流用する */
+.login-title {
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  font-size: 26px;
+  letter-spacing: 0.35em;
+  font-weight: 600;
+  color: var(--text);
+}
 .subtitle {
   font-size: 11px;
   letter-spacing: 0.25em;

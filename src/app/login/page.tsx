@@ -24,20 +24,21 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex flex-1 items-center justify-center bg-zinc-50 dark:bg-black">
-      <div className="flex w-full max-w-sm flex-col items-center gap-6 rounded-lg border border-black/[.08] bg-white px-8 py-12 text-center dark:border-white/[.145] dark:bg-zinc-900">
-        <h1 className="text-2xl font-semibold text-black dark:text-zinc-50">
-          作業の航海日誌
-        </h1>
+    <div className="flex flex-1 items-center justify-center">
+      <div className="modal flex flex-col items-center gap-6 text-center">
+        <div>
+          <h1 className="login-title">作業の航海日誌</h1>
+          <p className="subtitle">船員手帳の提示</p>
+        </div>
         <button
           type="button"
           onClick={handleSignIn}
           disabled={isSigningIn}
-          className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] disabled:opacity-50 dark:hover:bg-[#ccc]"
+          className="btn-ok w-full"
         >
           {isSigningIn ? "サインイン中..." : "Googleでサインイン"}
         </button>
-        {error && <p className="text-sm text-red-600 dark:text-red-400">{error}</p>}
+        {error && <p style={{ color: "var(--danger)" }}>{error}</p>}
       </div>
     </div>
   );
