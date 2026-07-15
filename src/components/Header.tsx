@@ -22,17 +22,19 @@ export default function Header() {
   };
 
   return (
-    <header className="flex items-center justify-end gap-4 border-b border-black/[.08] bg-white px-4 py-3 dark:border-white/[.145] dark:bg-zinc-900">
-      <button type="button" onClick={toggleMute} className="btn-ghost">
-        {muted ? "🔇 消音" : "🔊 音"}
-      </button>
-      <button
-        type="button"
-        onClick={handleSignOut}
-        className="rounded-full border border-black/[.08] px-4 py-1.5 text-sm font-medium text-black transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:text-zinc-50 dark:hover:bg-[#1a1a1a]"
-      >
-        サインアウト
-      </button>
+    <header>
+      <div className="title-block">
+        <h1>作業の航海日誌</h1>
+        <span className="subtitle">{"SHIP'S LOG — CHART No.1"}</span>
+      </div>
+      <div className="header-actions">
+        <button type="button" onClick={toggleMute} className="btn-ghost">
+          {muted ? "🔇 消音" : "🔊 音"}
+        </button>
+        <button type="button" onClick={handleSignOut} className="btn-ghost">
+          サインアウト
+        </button>
+      </div>
     </header>
   );
 }
