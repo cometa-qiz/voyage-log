@@ -79,42 +79,32 @@ export function NewVoyageModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-lg bg-white p-6 dark:bg-zinc-900">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-          新しい航路を引く
-        </h2>
+    <div className="modal-bg open">
+      <div className="modal">
+        <h2>新しい航路を引く</h2>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            作業・プロジェクト名（船名）
-          </label>
+        <div className="field">
+          <label>作業・プロジェクト名（船名）</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="例：Yggd-memo フェーズ3"
-            className="rounded border border-black/[.08] px-3 py-2 text-base dark:border-white/[.145] dark:bg-zinc-800"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            目的地（ゴールの名前）
-          </label>
+        <div className="field">
+          <label>目的地（ゴールの名前）</label>
           <input
             value={goal}
             onChange={(e) => setGoal(e.target.value)}
             placeholder="例：β版リリース港"
-            className="rounded border border-black/[.08] px-3 py-2 text-base dark:border-white/[.145] dark:bg-zinc-800"
           />
         </div>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            航海のモード
-          </label>
-          <div className="flex gap-4">
-            <label className="flex items-center gap-1.5 text-sm">
+        <div className="field">
+          <label>航海のモード</label>
+          <div className="mode-row">
+            <label className="mode-opt">
               <input
                 type="radio"
                 name="vmode"
@@ -124,7 +114,7 @@ export function NewVoyageModal({
               />
               ⏳ 時間目標
             </label>
-            <label className="flex items-center gap-1.5 text-sm">
+            <label className="mode-opt">
               <input
                 type="radio"
                 name="vmode"
@@ -135,78 +125,62 @@ export function NewVoyageModal({
               ♾ 無制限
             </label>
           </div>
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
-            {MODE_HINTS[mode]}
+          <div className="hint">{MODE_HINTS[mode]}</div>
+        </div>
+
+        <div className="field">
+          <label>目的地までの距離（目標作業時間）</label>
+          <div className={`dur-row ${mode === "free" ? "disabled" : ""}`}>
+            <select
+              value={hours}
+              onChange={(e) => setHours(Number(e.target.value))}
+            >
+              {HOUR_OPTIONS.map((h) => (
+                <option key={h} value={h}>
+                  {h}
+                </option>
+              ))}
+            </select>
+            <span>時間</span>
+            <select
+              value={minutes}
+              onChange={(e) => setMinutes(Number(e.target.value))}
+            >
+              {MINUTE_OPTIONS.map((m) => (
+                <option key={m} value={m}>
+                  {m}
+                </option>
+              ))}
+            </select>
+            <span>分</span>
           </div>
         </div>
 
-        {mode === "time" && (
-          <div className="flex flex-col gap-1">
-            <label className="text-sm text-zinc-600 dark:text-zinc-400">
-              目的地までの距離（目標作業時間）
-            </label>
-            <div className="flex items-center gap-2">
-              <select
-                value={hours}
-                onChange={(e) => setHours(Number(e.target.value))}
-                className="rounded border border-black/[.08] px-2 py-1.5 text-base dark:border-white/[.145] dark:bg-zinc-800"
-              >
-                {HOUR_OPTIONS.map((h) => (
-                  <option key={h} value={h}>
-                    {h}
-                  </option>
-                ))}
-              </select>
-              <span className="text-sm">時間</span>
-              <select
-                value={minutes}
-                onChange={(e) => setMinutes(Number(e.target.value))}
-                className="rounded border border-black/[.08] px-2 py-1.5 text-base dark:border-white/[.145] dark:bg-zinc-800"
-              >
-                {MINUTE_OPTIONS.map((m) => (
-                  <option key={m} value={m}>
-                    {m}
-                  </option>
-                ))}
-              </select>
-              <span className="text-sm">分</span>
-            </div>
-          </div>
-        )}
-
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
-            工程・Todo（1行に1つ。あとから手帳でも追加できます）
-          </label>
+        <div className="field">
+          <label>工程・Todo（1行に1つ。あとから手帳でも追加できます）</label>
           <textarea
             value={todosText}
             onChange={(e) => setTodosText(e.target.value)}
             placeholder={"例：\n要件を書き出す\n画面モックを作る\n実装する"}
-            rows={4}
-            className="rounded border border-black/[.08] px-3 py-2 text-base dark:border-white/[.145] dark:bg-zinc-800"
           />
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="hint">
             すべての工程を終えると、船は全速力で目的地へ向かいます
           </div>
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p style={{ color: "var(--danger)", fontSize: "13px" }}>{error}</p>
         )}
 
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
-          >
+        <div className="modal-actions">
+          <button type="button" onClick={onClose} className="btn-cancel">
             やめる
           </button>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="rounded-full bg-foreground px-5 py-2 text-sm text-background disabled:opacity-50"
+            className="btn-ok"
           >
             {isSubmitting ? "作成中..." : "航路を引く"}
           </button>

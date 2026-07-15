@@ -42,16 +42,16 @@ export function NoteModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="flex w-full max-w-md flex-col gap-4 rounded-lg bg-white p-6 dark:bg-zinc-900">
-        <h2 className="text-lg font-semibold text-black dark:text-zinc-50">
-          日誌に記帳
-        </h2>
+    <div className="modal-bg open">
+      <div className="modal">
+        <h2>日誌に記帳</h2>
 
-        <div className="flex flex-col gap-1">
-          <label className="text-sm text-zinc-600 dark:text-zinc-400">
+        <div className="field">
+          <label>
             メモ（現在地{" "}
-            <span className="font-mono text-amber-600 dark:text-amber-400">
+            <span
+              style={{ color: "var(--gold)", fontFamily: "Consolas,monospace" }}
+            >
               {openedAtProgress.toFixed(1)}% 地点
             </span>{" "}
             に記録されます）
@@ -60,28 +60,22 @@ export function NoteModal({
             value={note}
             onChange={(e) => setNote(e.target.value)}
             placeholder="今の状況・気づき・次にやること など"
-            rows={4}
-            className="rounded border border-black/[.08] px-3 py-2 text-base dark:border-white/[.145] dark:bg-zinc-800"
           />
         </div>
 
         {error && (
-          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+          <p style={{ color: "var(--danger)", fontSize: "13px" }}>{error}</p>
         )}
 
-        <div className="flex justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full border border-black/[.08] px-5 py-2 text-sm dark:border-white/[.145]"
-          >
+        <div className="modal-actions">
+          <button type="button" onClick={onClose} className="btn-cancel">
             やめる
           </button>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="rounded-full bg-foreground px-5 py-2 text-sm text-background disabled:opacity-50"
+            className="btn-ok"
           >
             {isSubmitting ? "記帳中..." : "記帳する"}
           </button>
