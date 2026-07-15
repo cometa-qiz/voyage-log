@@ -20,17 +20,13 @@ export function TodoDock({ voyage }: { voyage: Voyage | null }) {
     <div
       onClick={() => setIsOpen(!isOpen)}
       title="クリックで出し入れ"
-      className={`fixed top-1/2 left-0 z-30 flex -translate-y-1/2 cursor-pointer touch-manipulation transition-transform duration-300 select-none ${
-        isOpen ? "translate-x-0" : "translate-x-[calc(30px-100%)]"
-      }`}
+      className={`todo-dock ${isOpen ? "" : "closed"}`}
     >
-      <div className="w-[min(230px,60vw)] border border-r-0 border-black/[.15] bg-white/95 p-3.5 shadow-lg backdrop-blur-sm dark:border-white/[.2] dark:bg-zinc-900/95">
-        <div className="mb-2 border-b border-dashed border-black/[.15] pb-1.5 text-xs tracking-widest text-amber-600 dark:border-white/[.2] dark:text-amber-400">
-          残 り の 工 程
-        </div>
+      <div className="td-panel">
+        <div className="td-title">残 り の 工 程</div>
 
         {remain.length === 0 ? (
-          <div className="text-xs text-zinc-500 dark:text-zinc-400">
+          <div className="td-done-all">
             {voyage.todos.length > 0
               ? "全工程完了！🚩"
               : "工程はまだありません"}
@@ -38,25 +34,18 @@ export function TodoDock({ voyage }: { voyage: Voyage | null }) {
         ) : (
           <>
             {shown.map((todo) => (
-              <div
-                key={todo.id}
-                className="truncate text-[12.5px] text-amber-600 dark:text-amber-400"
-              >
+              <div key={todo.id} className="td-item">
                 □ {todo.text}
               </div>
             ))}
             {extraCount > 0 && (
-              <div className="mt-0.5 text-[11px] text-zinc-500 dark:text-zinc-400">
-                …他 {extraCount} 件
-              </div>
+              <div className="td-more">…他 {extraCount} 件</div>
             )}
           </>
         )}
       </div>
 
-      <div className="flex w-[30px] items-center justify-center rounded-r-lg border border-l-0 border-black/[.15] bg-amber-500 py-3.5 text-xs font-bold tracking-wide text-black shadow-lg [writing-mode:vertical-rl] dark:border-white/[.2]">
-        📋 工程
-      </div>
+      <div className="td-tab">📋 工程</div>
     </div>
   );
 }
