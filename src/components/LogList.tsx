@@ -20,9 +20,11 @@ export function LogList({
 
   if (logs.length === 0) {
     return (
-      <p className="text-sm text-zinc-500 dark:text-zinc-400">
-        まだ記帳がありません。道中どこでも「✎ 記帳する」で残せます。
-      </p>
+      <div className="log-list">
+        <div className="empty">
+          まだ記帳がありません。道中どこでも「✎ 記帳する」で残せます。
+        </div>
+      </div>
     );
   }
 
@@ -30,36 +32,19 @@ export function LogList({
   const reversedLogs = [...logs].reverse();
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="log-list">
       {reversedLogs.map((log) => (
-        <div
-          key={log.id}
-          className={`flex items-baseline gap-3 rounded-md border border-black/[.08] px-3 py-2 text-sm dark:border-white/[.08] ${
-            log.sys
-              ? "border-l-4 border-l-teal-600"
-              : "border-l-4 border-l-pink-600"
-          }`}
-        >
-          <span className="shrink-0 font-mono text-xs text-zinc-500 dark:text-zinc-400">
-            {fmtDate(log.ts)}
-          </span>
-          <span className="min-w-11 shrink-0 font-mono text-xs text-amber-600 dark:text-amber-400">
+        <div key={log.id} className={`log-item ${log.sys ? "sys" : ""}`}>
+          <span className="log-date">{fmtDate(log.ts)}</span>
+          <span className="log-pos">
             {log.pos != null ? `${log.pos.toFixed(1)}%` : "—"}
           </span>
-          <span
-            className={`flex-1 break-words ${
-              log.sys
-                ? "text-zinc-500 dark:text-zinc-400"
-                : "text-black dark:text-zinc-50"
-            }`}
-          >
-            {log.note}
-          </span>
+          <span className="log-note">{log.note}</span>
           <button
             type="button"
             title="消す"
             onClick={() => setDeleteTargetId(log.id)}
-            className="shrink-0 text-zinc-400 hover:text-red-600 dark:text-zinc-500"
+            className="log-del"
           >
             ×
           </button>

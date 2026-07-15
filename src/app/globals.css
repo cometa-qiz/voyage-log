@@ -874,6 +874,67 @@ header h1 {
   background: rgba(201, 168, 92, 0.25);
 }
 
+/* ---------- 航海日誌一覧（docs/voyage-log.html .log-list〜.empty・372〜387行目を移植） ---------- */
+.log-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.log-item {
+  display: flex;
+  gap: 14px;
+  align-items: baseline;
+  background: var(--navy);
+  border: 1px solid rgba(155, 168, 176, 0.12);
+  border-left: 3px solid var(--magenta);
+  border-radius: 6px;
+  padding: 9px 14px;
+  font-size: 13px;
+}
+.log-item.sys {
+  border-left-color: var(--teal);
+}
+.log-date {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 0 0 auto;
+}
+.log-pos {
+  font-family: Consolas, monospace;
+  font-size: 11px;
+  color: var(--gold);
+  flex: 0 0 auto;
+  min-width: 44px;
+}
+.log-note {
+  color: var(--text);
+  flex: 1;
+  word-break: break-word;
+}
+.log-item.sys .log-note {
+  color: var(--text-dim);
+}
+.log-del {
+  background: none;
+  border: none;
+  color: rgba(155, 168, 176, 0.4);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0 2px;
+}
+.log-del:hover {
+  color: var(--danger);
+}
+.empty {
+  color: var(--text-dim);
+  font-size: 13px;
+  padding: 16px;
+  text-align: center;
+  border: 1px dashed rgba(155, 168, 176, 0.25);
+  border-radius: 8px;
+}
+
 /* ---------- 航行中タイマー表示（sail-badgeへの構造変更はスコープ外。
    色とフォントのみプロトタイプのmonospace系表記に合わせる軽微な調整） ---------- */
 .sail-clock {
