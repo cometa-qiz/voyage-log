@@ -111,12 +111,14 @@ export function VoyagePanel({
   const [isFullSpeedAnimating, setIsFullSpeedAnimating] = useState(false);
   const fullSpeedAnimationFrameRef = useRef<number | null>(null);
   const fullSpeedBannerTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const fullSpeedStartTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     return () => {
       if (cheerFadeTimeoutRef.current !== null) clearTimeout(cheerFadeTimeoutRef.current);
       if (cheerRemoveTimeoutRef.current !== null) clearTimeout(cheerRemoveTimeoutRef.current);
       if (fullSpeedBannerTimeoutRef.current !== null) clearTimeout(fullSpeedBannerTimeoutRef.current);
+      if (fullSpeedStartTimeoutRef.current !== null) clearTimeout(fullSpeedStartTimeoutRef.current);
       if (fullSpeedAnimationFrameRef.current !== null) {
         cancelAnimationFrame(fullSpeedAnimationFrameRef.current);
       }
@@ -281,36 +283,46 @@ export function VoyagePanel({
     if (fullSpeedArrivedRef.current) return;
     fullSpeedArrivedRef.current = true;
 
-    const fromP = displayProgressRef.current;
-    fullspeed();
-    setShowFullspeedBanner(true);
-    setIsFullSpeedAnimating(true);
+    // 要件定義書8-5「工程宝モーダル→（250ms後）全速前進→入港カード」の順序を守るため、
+    // アニメーション開始処理自体を250ms遅延させる。
+    fullSpeedStartTimeoutRef.current = setTimeout(() => {
+      fullSpeedStartTimeoutRef.current = null;
 
-    fullSpeedBannerTimeoutRef.current = setTimeout(() => {
-      setShowFullspeedBanner(false);
-    }, 3400);
+      const fromP = displayProgressRef.current;
+      fullspeed();
+      setShowFullspeedBanner(true);
+      setIsFullSpeedAnimating(true);
 
-    // イージング式（1657行目）をそのまま移植。t<.4は加速区間（(t/.4)²×.25）、
-    // t>=.4は残り75%を線形補間する2段階カーブ。
-    const durationMs = 3000;
-    const startTime = performance.now();
+      fullSpeedBannerTimeoutRef.current = setTimeout(() => {
+        setShowFullspeedBanner(false);
+      }, 3400);
 
-    const frame = (now: number) => {
-      const t = Math.min(1, (now - startTime) / durationMs);
-      const eased =
-        t < 0.4 ? (t / 0.4) * (t / 0.4) * 0.25 : 0.25 + ((t - 0.4) / 0.6) * 0.75;
-      setDisplayProgress(fromP + (100 - fromP) * eased);
-      if (t < 1) {
-        fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
-      } else {
-        fullSpeedAnimationFrameRef.current = null;
-        setIsFullSpeedAnimating(false);
-        onArriveRef.current(true);
-      }
-    };
-    fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+      // イージング式（1657行目）をそのまま移植。t<.4は加速区間（(t/.4)²×.25）、
+      // t>=.4は残り75%を線形補間する2段階カーブ。
+      const durationMs = 3000;
+      const startTime = performance.now();
+
+      const frame = (now: number) => {
+        const t = Math.min(1, (now - startTime) / durationMs);
+        const eased =
+          t < 0.4 ? (t / 0.4) * (t / 0.4) * 0.25 : 0.25 + ((t - 0.4) / 0.6) * 0.75;
+        setDisplayProgress(fromP + (100 - fromP) * eased);
+        if (t < 1) {
+          fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+        } else {
+          fullSpeedAnimationFrameRef.current = null;
+          setIsFullSpeedAnimating(false);
+          onArriveRef.current(true);
+        }
+      };
+      fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
+    }, 250);
 
     return () => {
+      if (fullSpeedStartTimeoutRef.current !== null) {
+        clearTimeout(fullSpeedStartTimeoutRef.current);
+        fullSpeedStartTimeoutRef.current = null;
+      }
       if (fullSpeedAnimationFrameRef.current !== null) {
         cancelAnimationFrame(fullSpeedAnimationFrameRef.current);
         fullSpeedAnimationFrameRef.current = null;
