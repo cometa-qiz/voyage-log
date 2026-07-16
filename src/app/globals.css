@@ -1405,3 +1405,19 @@ header h1 {
   .mode-row{flex-direction:column;}
   .td-panel{width:56vw;}
 }
+
+/* ---------- エラートースト ---------- */
+.toast-stack{
+  position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));
+  transform:translateX(-50%);
+  display:flex;flex-direction:column;gap:8px;
+  z-index:80;width:min(360px,92vw);
+}
+.toast{
+  background:var(--navy);border:1px solid rgba(201,168,92,.4);
+  border-radius:var(--radius);padding:12px 16px;
+  font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.4);
+  cursor:pointer;
+}
+.toast-error{border-color:rgba(194,91,65,.6);color:var(--danger);}
+.toast-success{border-color:rgba(62,142,139,.6);color:var(--teal);}
