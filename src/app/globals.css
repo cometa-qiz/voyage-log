@@ -40,6 +40,10 @@
    （300ms遅延・ダブルタップズームの防止） */
 button,.tab,.nb-item,.todo-dock,.t-cell,.arch-todo{touch-action:manipulation;}
 
+html {
+  overflow-x: hidden;
+}
+
 /* ---------- body（docs/voyage-log.html body・29〜38行目を移植） ---------- */
 body {
   background: var(--navy-deep);
@@ -50,6 +54,7 @@ body {
   font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif;
   line-height: 1.6;
   min-height: 100%;
+  overflow-x: hidden;
 }
 
 /* ---------- Header（docs/voyage-log.html header・41〜54行目を移植。
@@ -126,6 +131,8 @@ header h1 {
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  min-width: 0;
+  width: 100%;
   max-width: 1060px;
   margin: 0 auto 14px;
   padding: 0 16px 10px;
