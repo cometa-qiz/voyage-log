@@ -1,6 +1,11 @@
 import { getApps, initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import {
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  getFirestore,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -14,4 +19,19 @@ const firebaseConfig = {
 const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
 
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+
+// Firestoreのオフラインキャッシュ(IndexedDB)を有効化する（requirements.md 非機能要件）。
+// 複数タブで同時に開いても動作するようpersistentMultipleTabManagerを使用。
+// Next.jsのFast Refreshや静的書き出し時の再評価でinitializeFirestoreが
+// 二重に呼ばれるとエラーになるため、失敗時はgetFirestore(app)にフォールバックする。
+export const db = (() => {
+  try {
+    return initializeFirestore(app, {
+      localCache: persistentLocalCache({
+        tabManager: persistentMultipleTabManager(),
+      }),
+    });
+  } catch {
+    return getFirestore(app);
+  }
+})();
