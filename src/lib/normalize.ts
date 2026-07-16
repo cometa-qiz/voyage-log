@@ -8,11 +8,23 @@ export type RawVoyage = Partial<Voyage> &
     "id" | "name" | "goal" | "createdAt" | "routeIndex" | "sailing" | "sailStart"
   > & {
     todos?: RawTodo[];
+    // プロトタイプ旧版（v2〜v4）のスキーマに存在した時間指定フィールド。
+    // 現行のVoyage型には無いが、インポートで古いエクスポートJSONを
+    // 読み込む場合に備え、プロトタイプのnormalizeVoyage（746〜759行目）と
+    // 同じフォールバックを再現する
+    targetHours?: number;
   };
 
 export function normalizeVoyage(voyage: RawVoyage): Voyage {
-  const targetMinutes = voyage.targetMinutes ?? null;
-  const mode = voyage.mode ?? (targetMinutes == null ? "free" : "time");
+  const mode =
+    voyage.mode ??
+    (voyage.targetMinutes == null && voyage.targetHours == null
+      ? "free"
+      : "time");
+  const targetMinutes =
+    mode === "time" && voyage.targetMinutes == null
+      ? (voyage.targetHours || 1) * 60
+      : (voyage.targetMinutes ?? null);
 
   const todos: Todo[] = (voyage.todos ?? []).map((todo) => ({
     id: todo.id,
