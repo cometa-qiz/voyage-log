@@ -199,6 +199,8 @@ export function VoyagePanel({
     displayProgressRef.current = displayProgress;
   });
 
+  const lastUpdateTimeRef = useRef(0);
+
   useEffect(() => {
     const before = prevTargetRef.current;
     const after = targetProgress;
@@ -231,7 +233,10 @@ export function VoyagePanel({
 
     const frame = (now: number) => {
       const t = Math.min(1, (now - startTime) / durationMs);
-      setDisplayProgress(before + (after - before) * easeOutCubic(t));
+      if (now - lastUpdateTimeRef.current >= 16 || t >= 1) {
+        lastUpdateTimeRef.current = now;
+        setDisplayProgress(before + (after - before) * easeOutCubic(t));
+      }
       if (t < 1) {
         animationFrameRef.current = requestAnimationFrame(frame);
       } else {
@@ -277,6 +282,8 @@ export function VoyagePanel({
   // 時間目標モードの経過時間100%到達（arrivedRef用effect、上記）とはトリガーが別であり、
   // 両方が同時に条件を満たすケースはv1では考慮しない。
   // 二重発火防止はarrivedRefと同じ方針で別のrefを使う。
+  const fullSpeedLastUpdateTimeRef = useRef(0);
+
   useEffect(() => {
     if (voyage.archived) return;
     if (!allDone) return;
@@ -306,7 +313,10 @@ export function VoyagePanel({
         const t = Math.min(1, (now - startTime) / durationMs);
         const eased =
           t < 0.4 ? (t / 0.4) * (t / 0.4) * 0.25 : 0.25 + ((t - 0.4) / 0.6) * 0.75;
-        setDisplayProgress(fromP + (100 - fromP) * eased);
+        if (now - fullSpeedLastUpdateTimeRef.current >= 16 || t >= 1) {
+          fullSpeedLastUpdateTimeRef.current = now;
+          setDisplayProgress(fromP + (100 - fromP) * eased);
+        }
         if (t < 1) {
           fullSpeedAnimationFrameRef.current = requestAnimationFrame(frame);
         } else {
