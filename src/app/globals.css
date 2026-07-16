@@ -126,6 +126,7 @@ header h1 {
   display: flex;
   gap: 8px;
   overflow-x: auto;
+  min-width: 0;
   max-width: 1060px;
   margin: 0 auto 14px;
   padding: 0 16px 10px;
