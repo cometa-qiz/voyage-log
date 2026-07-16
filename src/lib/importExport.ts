@@ -62,6 +62,27 @@ function treasureKey(t: Pick<Treasure, "letter" | "ts" | "source">): string {
   return `${t.letter}|${t.ts}|${t.source}`;
 }
 
+interface ImportPayload {
+  voyages: RawVoyage[];
+  treasures: Partial<Treasure>[];
+}
+
+// importData()内の `if(!Array.isArray(data.voyages))throw 0;`（docs/voyage-log.html
+// 1728行目）と同じ判定。呼び出し側（Header）が確認ダイアログを出す前に、
+// ファイルが読み込み可能な形式かどうかを事前チェックする用途にも使う。
+export function validateImportPayload(jsonText: string): ImportPayload {
+  const data = JSON.parse(jsonText);
+  if (!Array.isArray(data.voyages)) {
+    throw new Error("invalid import data: voyages is not an array");
+  }
+  return {
+    voyages: data.voyages as RawVoyage[],
+    treasures: (
+      Array.isArray(data.treasures) ? data.treasures : []
+    ) as Partial<Treasure>[],
+  };
+}
+
 // importData()（docs/voyage-log.html 1722〜1739行目）を移植。
 // 呼び出し側で確認ダイアログ（ConfirmDialog）を経た後に呼ばれる想定。
 // - 既存のアクティブ航路は物理削除せずisActive:falseへ更新する（constraints.md #8・#9）
@@ -73,14 +94,8 @@ export async function importVoyageLog(
   uid: string,
   jsonText: string,
 ): Promise<ImportResult> {
-  const data = JSON.parse(jsonText);
-  if (!Array.isArray(data.voyages)) {
-    throw new Error("invalid import data: voyages is not an array");
-  }
-  const importedVoyages = data.voyages as RawVoyage[];
-  const importedTreasures = (
-    Array.isArray(data.treasures) ? data.treasures : []
-  ) as Partial<Treasure>[];
+  const { voyages: importedVoyages, treasures: importedTreasures } =
+    validateImportPayload(jsonText);
 
   const voyagesRef = collection(db, "users", uid, "voyages");
   const treasuresRef = collection(db, "users", uid, "treasures");
