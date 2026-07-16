@@ -36,6 +36,10 @@
   --radius: 10px;
 }
 
+/* docs/voyage-log.html 27行目を移植：タップ操作の反応を高速化
+   （300ms遅延・ダブルタップズームの防止） */
+button,.tab,.nb-item,.todo-dock,.t-cell,.arch-todo{touch-action:manipulation;}
+
 /* ---------- body（docs/voyage-log.html body・29〜38行目を移植） ---------- */
 body {
   background: var(--navy-deep);
