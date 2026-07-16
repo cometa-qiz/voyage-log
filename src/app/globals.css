@@ -1341,3 +1341,67 @@ header h1 {
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation-duration:.01ms !important;transition-duration:.01ms !important;}
 }
+
+/* ---------- docs/voyage-log.html 552〜613行目を移植 ---------- */
+@media (max-width:640px){
+  .app{padding:14px 10px 80px;}
+  h1{font-size:19px;letter-spacing:.18em;}
+  .subtitle{display:none;}
+  header{padding-bottom:10px;margin-bottom:12px;}
+  .btn-ghost{font-size:11px;padding:4px 9px;}
+
+  /* iOS Safariのフォーカス時自動ズームを防止（16px以上必須） */
+  .field input,.field textarea,.field select,.nb-add input,.dur-row select{font-size:16px;}
+
+  .chart-panel{padding:8px;}
+  .wx-badge{top:6px;left:6px;font-size:10px;padding:3px 7px;gap:5px;}
+  .sail-badges{top:6px;right:6px;gap:4px;}
+  .sail-badge,.pomo-badge{font-size:10px;padding:3px 8px;}
+  .islander{font-size:11px;max-width:160px;padding:6px 10px;}
+  .islander .who{font-size:9px;}
+  .fullspeed-banner{font-size:13px;letter-spacing:.2em;padding:6px 14px;}
+
+  .stats{grid-template-columns:auto 1fr;gap:10px 14px;margin-top:12px;}
+  .stat{text-align:left;}
+  .pct-big{font-size:27px;}
+  .progress-track{min-width:90px;}
+
+  .log-row{gap:8px;margin-top:12px;}
+  .btn-primary{font-size:15px;padding:13px 14px;min-width:150px;}
+  .btn-note,.btn-pomo{font-size:13px;padding:13px 10px;min-width:104px;}
+  .btn-secondary{padding:13px 12px;font-size:12px;}
+
+  .log-item{gap:8px;padding:8px 10px;font-size:12px;flex-wrap:wrap;}
+  .log-pos{min-width:38px;}
+
+  .todo-dock{top:44%;}
+  .td-panel{width:min(200px,58vw);padding:12px 12px;}
+  .td-title{font-size:11px;}
+  .td-item{font-size:11.5px;}
+  .td-tab{width:26px;font-size:11px;padding:12px 0;letter-spacing:.16em;}
+
+  .notebook-btn{width:54px;height:54px;font-size:23px;right:14px;bottom:calc(14px + env(safe-area-inset-bottom,0px));}
+  .notebook{width:min(320px,90vw);}
+  .nb-body{padding:10px 10px 88px;}
+
+  .treasure-grid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px;}
+  .t-letter{font-size:26px;}
+  .collection-panel{padding:14px;}
+  .coll-summary{gap:16px;}
+
+  .arch-item{gap:8px;padding:9px 12px;font-size:12px;}
+  .arch-del{margin-left:0;}
+
+  .modal{padding:18px;}
+  .treasure-card .t-big{font-size:68px;}
+  .arrival-card{padding:26px 20px;margin:0 6px;}
+  .arrival-card .flag{font-size:40px;}
+  .arrival-card h2{font-size:19px;letter-spacing:.2em;}
+  .arrival-card p{font-size:13px;}
+}
+@media (max-width:420px){
+  .header-actions{width:100%;justify-content:flex-end;}
+  .btn-primary{flex:1 1 100%;}
+  .mode-row{flex-direction:column;}
+  .td-panel{width:56vw;}
+}
