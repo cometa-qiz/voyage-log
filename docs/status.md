@@ -238,6 +238,7 @@
 - [ ] エクスポート: 全データ（voyages・treasures等）を `voyage-log_YYYYMMDD.json` としてダウンロードする
 - [ ] インポート: ファイル選択→確認ダイアログ→Firestore上の自分のデータを一括置換する（`normalizeVoyage()` を適用）
 - [ ] プロトタイプ（localStorage v5）のエクスポートJSONを取り込めることを確認する（実データ移行）
+  - 実装メモ（ブランチ`feat/import-export`）：`src/lib/importExport.ts`に`exportVoyageLog()`・`importVoyageLog()`・`validateImportPayload()`を実装し、`Header.tsx`に書き出し/読み込みボタンとConfirmDialogによる確認フローを接続済み。`pnpm build`/`pnpm lint`は通過、開発サーバーの起動・トップページ疎通も確認済み。ただしブラウザでのボタン操作・Firestoreコンソールでの実データ確認（このチェックリスト自体・下記✅完了確認）は未実施のため、チェックは未使用のままにしてある。実機確認チェックリストは別途ユーザー側で実施予定。
 
 ### ✅ 完了確認
 - [ ] エクスポート→インポートで完全に復元される
