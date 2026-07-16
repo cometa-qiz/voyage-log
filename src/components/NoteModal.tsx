@@ -36,6 +36,10 @@ export function NoteModal({
     try {
       await onSubmit(trimmedNote);
       onClose();
+    } catch {
+      // 保存失敗時はモーダルを閉じずに残し、再試行できるようにする。
+      // エラーメッセージはuseVoyages側の共通トーストとして表示済みのため、
+      // ここでは何もしない（モーダルを閉じないことが唯一の対応）。
     } finally {
       setIsSubmitting(false);
     }

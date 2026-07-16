@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { onAuthStateChanged, signOut, type User } from "firebase/auth";
 import { auth } from "@/lib/firebase";
 import { useSoundContext } from "@/components/SoundProvider";
+import { useToastContext } from "@/components/ToastProvider";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
   exportVoyageLog,
@@ -14,12 +15,9 @@ import {
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
   const { muted, toggleMute } = useSoundContext();
+  const { showToast } = useToastContext();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
-  const [message, setMessage] = useState<{
-    text: string;
-    isError: boolean;
-  } | null>(null);
   const [pendingImportText, setPendingImportText] = useState<string | null>(
     null,
   );
@@ -38,12 +36,11 @@ export default function Header() {
   };
 
   const handleExport = async () => {
-    setMessage(null);
     setIsExporting(true);
     try {
       await exportVoyageLog(user.uid);
     } catch {
-      setMessage({ text: "書き出しに失敗しました。", isError: true });
+      showToast("書き出しに失敗しました。", "error");
     } finally {
       setIsExporting(false);
     }
@@ -58,7 +55,6 @@ export default function Header() {
     e.target.value = "";
     if (!file) return;
 
-    setMessage(null);
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result);
@@ -66,10 +62,7 @@ export default function Header() {
         validateImportPayload(text);
         setPendingImportText(text);
       } catch {
-        setMessage({
-          text: "読み込めませんでした。ファイル形式を確認してください。",
-          isError: true,
-        });
+        showToast("読み込めませんでした。ファイル形式を確認してください。", "error");
       }
     };
     reader.readAsText(file);
@@ -80,15 +73,12 @@ export default function Header() {
     setIsImporting(true);
     try {
       const result = await importVoyageLog(user.uid, pendingImportText);
-      setMessage({
-        text: `インポートが完了しました（航路${result.voyageCount}件・宝${result.treasureCount}件）`,
-        isError: false,
-      });
+      showToast(
+        `インポートが完了しました（航路${result.voyageCount}件・宝${result.treasureCount}件）`,
+        "success",
+      );
     } catch {
-      setMessage({
-        text: "読み込めませんでした。ファイル形式を確認してください。",
-        isError: true,
-      });
+      showToast("読み込めませんでした。ファイル形式を確認してください。", "error");
     } finally {
       setIsImporting(false);
       setPendingImportText(null);
@@ -132,17 +122,6 @@ export default function Header() {
           サインアウト
         </button>
       </div>
-      {message && (
-        <p
-          style={{
-            color: message.isError ? "var(--danger)" : "var(--text-dim)",
-            fontSize: "13px",
-          }}
-        >
-          {message.text}
-        </p>
-      )}
-
       {pendingImportText && (
         <ConfirmDialog
           message="現在のデータを読み込んだ内容で置き換えます。よろしいですか？"

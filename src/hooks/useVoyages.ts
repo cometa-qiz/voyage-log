@@ -12,6 +12,7 @@ import {
 import { auth, db } from "@/lib/firebase";
 import { ROUTES } from "@/lib/routes";
 import type { Todo, Voyage } from "@/lib/types";
+import { useToastContext } from "@/components/ToastProvider";
 
 export interface CreateVoyageInput {
   name: string;
@@ -27,6 +28,7 @@ function genId(): string {
 }
 
 export function useVoyages() {
+  const { showToast } = useToastContext();
   const [uid, setUid] = useState<string | null>(null);
   const [voyages, setVoyages] = useState<Voyage[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,10 +53,16 @@ export function useVoyages() {
         voyagesRef,
         where("isActive", "==", true),
       );
-      unsubscribeVoyages = onSnapshot(activeVoyagesQuery, (snapshot) => {
-        setVoyages(snapshot.docs.map((docSnap) => docSnap.data() as Voyage));
-        setLoading(false);
-      });
+      unsubscribeVoyages = onSnapshot(
+        activeVoyagesQuery,
+        (snapshot) => {
+          setVoyages(snapshot.docs.map((docSnap) => docSnap.data() as Voyage));
+          setLoading(false);
+        },
+        () => {
+          showToast("データの同期に失敗しました", "error");
+        },
+      );
     });
 
     return () => {
@@ -100,12 +108,22 @@ export function useVoyages() {
       schemaVersion: 5,
     };
 
-    await setDoc(doc(voyagesRef, id), voyage);
+    try {
+      await setDoc(doc(voyagesRef, id), voyage);
+    } catch (error) {
+      showToast("航路の作成に失敗しました。もう一度お試しください", "error");
+      throw error;
+    }
   };
 
   const updateVoyage = async (voyageId: string, data: Partial<Voyage>) => {
     if (!uid) return;
-    await updateDoc(doc(db, "users", uid, "voyages", voyageId), data);
+    try {
+      await updateDoc(doc(db, "users", uid, "voyages", voyageId), data);
+    } catch (error) {
+      showToast("保存に失敗しました。もう一度お試しください", "error");
+      throw error;
+    }
   };
 
   const discardVoyage = async (voyageId: string) => {
