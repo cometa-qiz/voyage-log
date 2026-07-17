@@ -270,7 +270,7 @@
   （firebase.jsonにfirestoreデプロイターゲットが未定義だったため追加し、
   実際にfirebase deploy --only firestore:rulesでリポジトリの内容を
   Firebase上へ反映・一致させた）
-- [ ] `pnpm build` → `pnpm deploy` で最終デプロイする
+- [x] `pnpm build` → `pnpm deploy` で最終デプロイする
 
 ### ✅ 完了確認
 - [x] 他ユーザーのデータにアクセスできないことを確認した
