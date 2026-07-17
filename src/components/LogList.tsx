@@ -12,9 +12,11 @@ import type { LogEntry } from "@/lib/types";
 export function LogList({
   logs,
   onDeleteLog,
+  readOnly = false,
 }: {
   logs: LogEntry[];
-  onDeleteLog: (logId: string) => Promise<void>;
+  onDeleteLog?: (logId: string) => Promise<void>;
+  readOnly?: boolean;
 }) {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 
@@ -40,24 +42,26 @@ export function LogList({
             {log.pos != null ? `${log.pos.toFixed(1)}%` : "—"}
           </span>
           <span className="log-note">{log.note}</span>
-          <button
-            type="button"
-            title="消す"
-            onClick={() => setDeleteTargetId(log.id)}
-            className="log-del"
-          >
-            ×
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              title="消す"
+              onClick={() => setDeleteTargetId(log.id)}
+              className="log-del"
+            >
+              ×
+            </button>
+          )}
         </div>
       ))}
 
-      {deleteTargetId && (
+      {!readOnly && deleteTargetId && (
         <ConfirmDialog
           message="この記帳を消しますか？"
           confirmLabel="消す"
           onCancel={() => setDeleteTargetId(null)}
           onConfirm={async () => {
-            await onDeleteLog(deleteTargetId);
+            await onDeleteLog?.(deleteTargetId);
             setDeleteTargetId(null);
           }}
         />
