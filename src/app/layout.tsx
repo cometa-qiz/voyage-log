@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import AuthGuard from "@/components/AuthGuard";
 import Header from "@/components/Header";
@@ -19,6 +19,18 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "作業の航海日誌",
   description: "作業の進捗を航海に見立てて記録するアプリ",
+  manifest: "/manifest.json",
+  icons: {
+    icon: [
+      { url: "/favicon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: "/apple-touch-icon.png",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0f1e2c",
 };
 
 export default function RootLayout({
