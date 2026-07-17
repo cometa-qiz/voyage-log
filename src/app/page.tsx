@@ -12,6 +12,7 @@ import { NewVoyageModal } from "@/components/NewVoyageModal";
 import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
+import { LogViewModal } from "@/components/LogViewModal";
 import { TodoDock } from "@/components/TodoDock";
 import { TreasureModal } from "@/components/TreasureModal";
 import { TreasureCollection } from "@/components/TreasureCollection";
@@ -127,6 +128,9 @@ export default function Home() {
     null,
   );
   const [isNotebookOpen, setIsNotebookOpen] = useState(false);
+  const [logViewVoyageId, setLogViewVoyageId] = useState<string | null>(
+    null,
+  );
 
   // render()内の `state.voyages.filter(v=>!v.archived)` 相当
   // （useVoyagesは既にisActive:trueのみ購読しているため、archivedのみ追加でフィルタする）
@@ -513,6 +517,15 @@ export default function Home() {
                       {voyage.todos.length}
                     </button>
                   )}
+                  {voyage.logs.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setLogViewVoyageId(voyage.id)}
+                      className="rounded-full border border-black/[.08] px-3 py-1 text-xs dark:border-white/[.145]"
+                    >
+                      🗒 記帳 {voyage.logs.length}件
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -531,6 +544,20 @@ export default function Home() {
         onAddTodo={handleAddTodo}
         onDeleteTodo={handleDeleteTodo}
       />
+
+      {logViewVoyageId &&
+        (() => {
+          const logViewVoyage = archivedVoyages.find(
+            (v) => v.id === logViewVoyageId,
+          );
+          if (!logViewVoyage) return null;
+          return (
+            <LogViewModal
+              voyage={logViewVoyage}
+              onClose={() => setLogViewVoyageId(null)}
+            />
+          );
+        })()}
 
       {arrivedVoyage && (
         <div className="arrival">
