@@ -188,7 +188,9 @@ export default function DevPage() {
         {isNewVoyageModalOpen && (
           <NewVoyageModal
             onClose={() => setIsNewVoyageModalOpen(false)}
-            onCreate={createVoyage}
+            onCreate={async (input) => {
+              await createVoyage(input);
+            }}
           />
         )}
       </section>

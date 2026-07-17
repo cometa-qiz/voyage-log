@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useVoyages } from "@/hooks/useVoyages";
+import { useVoyages, type CreateVoyageInput } from "@/hooks/useVoyages";
 import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { useSoundContext } from "@/components/SoundProvider";
@@ -397,6 +397,14 @@ export default function Home() {
     setArrivedVoyage(null);
   };
 
+  // createVoyage()内`state.activeId=v.id;state.view='chart';`
+  // （1527〜1528行目）を移植。新規航路作成後、自動でそのタブへ切り替える。
+  const handleCreateVoyage = async (input: CreateVoyageInput) => {
+    const id = await createVoyage(input);
+    setActiveId(id);
+    setView("chart");
+  };
+
   return (
     <div className="flex flex-1 flex-col min-w-0">
       <TabBar
@@ -534,7 +542,7 @@ export default function Home() {
       {isNewVoyageModalOpen && (
         <NewVoyageModal
           onClose={() => setIsNewVoyageModalOpen(false)}
-          onCreate={createVoyage}
+          onCreate={handleCreateVoyage}
         />
       )}
 
