@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import {
+  useTodStart,
+  useTodOffset,
+  useWeatherKey,
+  useWeatherSetAt,
+} from "@/hooks/useLocalSettings";
 
 // docs/voyage-log.html 846〜857行目のWXS/randomWx()/currentWx/setIntervalと、
 // 859〜880行目のTODS/todStart/todOffset/currentTod()を移植。
 // 天候・時間帯はクライアントローカルの演出用状態であり、Firestoreには保存しない
 // （constraints.md：天候・時間帯はクライアントローカルで抽選する方針）。
+// ページ再読み込みでも継続するよう、起点値・現在値をlocalStorageに保存する
+// （ユーザー要望による、プロトタイプからの意図的な拡張）。
 
 export type WeatherKey = "wx-sunny" | "wx-cloudy" | "wx-storm";
 
@@ -26,6 +34,10 @@ const WX_INTERVAL_MS = 240000;
 function randomWx(): Weather {
   const r = Math.random();
   return WXS[r < 0.55 ? 0 : r < 0.85 ? 1 : 2];
+}
+
+function findWx(key: string): Weather {
+  return WXS.find((w) => w.key === key) ?? WXS[0];
 }
 
 export type TimeOfDayKey =
@@ -57,19 +69,33 @@ function currentTod(todStart: number, todOffset: number): TimeOfDay {
 }
 
 export function useAmbience() {
-  const [weather, setWeather] = useState<Weather>(randomWx);
-  const [todStart] = useState<number>(() => Date.now());
-  const [todOffset] = useState<number>(() => Math.floor(Math.random() * 5));
+  const [weatherKey, setWeatherKey] = useWeatherKey();
+  const [weatherSetAt, setWeatherSetAt] = useWeatherSetAt();
+  const [todStart] = useTodStart();
+  const [todOffset] = useTodOffset();
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(() =>
     currentTod(todStart, todOffset),
   );
 
+  // マウント時、前回の天候変更から既にWX_INTERVAL_MS以上経過していれば
+  // 即座に再抽選する（離れていた間の分を追いつかせる）。
+  useEffect(() => {
+    if (Date.now() - weatherSetAt >= WX_INTERVAL_MS) {
+      const next = randomWx();
+      setWeatherKey(next.key);
+      setWeatherSetAt(Date.now());
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     const id = setInterval(() => {
-      setWeather(randomWx());
+      const next = randomWx();
+      setWeatherKey(next.key);
+      setWeatherSetAt(Date.now());
     }, WX_INTERVAL_MS);
     return () => clearInterval(id);
-  }, []);
+  }, [setWeatherKey, setWeatherSetAt]);
 
   // プロトタイプの`setInterval(()=>{if(state.view==='chart')applyAmbience();},5000)`
   // （1441行目）を移植。このフックはChart表示中のみマウントされるため、
@@ -81,5 +107,5 @@ export function useAmbience() {
     return () => clearInterval(id);
   }, [todStart, todOffset]);
 
-  return { weather, timeOfDay };
+  return { weather: findWx(weatherKey), timeOfDay };
 }

@@ -41,3 +41,22 @@ export function useMuted() {
 export function useDockOpen() {
   return useLocalStorageState<boolean>("voyage-log-dockOpen", true);
 }
+
+export function useTodStart() {
+  return useLocalStorageState<number>("voyage-log-todStart", Date.now());
+}
+
+export function useTodOffset() {
+  return useLocalStorageState<number>(
+    "voyage-log-todOffset",
+    Math.floor(Math.random() * 5),
+  );
+}
+
+export function useWeatherKey() {
+  return useLocalStorageState<string>("voyage-log-weatherKey", "wx-sunny");
+}
+
+export function useWeatherSetAt() {
+  return useLocalStorageState<number>("voyage-log-weatherSetAt", Date.now());
+}
