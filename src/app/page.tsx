@@ -5,6 +5,7 @@ import { useVoyages, type CreateVoyageInput } from "@/hooks/useVoyages";
 import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
 import { useActiveId, useView } from "@/hooks/useLocalSettings";
 import { useSoundContext } from "@/components/SoundProvider";
+import { useToastContext } from "@/components/ToastProvider";
 import { TabBar } from "@/components/TabBar";
 import { VoyagePanel } from "@/components/VoyagePanel";
 import { NewVoyageModal } from "@/components/NewVoyageModal";
@@ -77,6 +78,7 @@ export default function Home() {
   const { voyages, createVoyage, updateVoyage, discardVoyage } = useVoyages();
   const { treasures, grantTreasure } = useTreasures();
   const sound = useSoundContext();
+  const { showToast } = useToastContext();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
@@ -202,6 +204,11 @@ export default function Home() {
     if (!notebookVoyage) return;
     const todo = notebookVoyage.todos.find((t) => t.id === todoId);
     if (!todo) return;
+
+    if (!notebookVoyage.archived && !notebookVoyage.sailing) {
+      showToast("出航中のみ工程を操作できます", "error");
+      return;
+    }
 
     if (!todo.done) {
       const elapsedAtDone = elapsedMs(notebookVoyage);
