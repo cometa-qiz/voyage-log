@@ -35,7 +35,7 @@ export function TodoDock({ voyage }: { voyage: Voyage | null }) {
           <>
             {shown.map((todo) => (
               <div key={todo.id} className="td-item">
-                □ {todo.text}
+                {todo.text}
               </div>
             ))}
             {extraCount > 0 && (
