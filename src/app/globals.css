@@ -1193,7 +1193,9 @@ header h1 {
 
 /* ---------- Treasure collection（docs/voyage-log.html .collection-panel〜.t-cell.unowned .t-count・407〜441行目を移植） ---------- */
 .collection-panel {
-  background: var(--navy);
+  background:
+    radial-gradient(ellipse 80% 40% at 50% 0%, rgba(201, 168, 92, 0.06), transparent),
+    var(--navy);
   border: 1px solid rgba(201, 168, 92, 0.3);
   border-radius: var(--radius);
   padding: 22px;
@@ -1232,9 +1234,7 @@ header h1 {
 }
 .t-cell.owned {
   border-color: rgba(201, 168, 92, 0.55);
-  background:
-    radial-gradient(ellipse 90% 70% at 50% 20%, rgba(201, 168, 92, 0.16), transparent),
-    rgba(30, 26, 15, 0.7);
+  background: rgba(30, 26, 15, 0.7);
   box-shadow: inset 0 0 20px rgba(201, 168, 92, 0.08);
 }
 .t-cell.owned:hover {
