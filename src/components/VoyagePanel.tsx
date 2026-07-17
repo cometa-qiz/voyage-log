@@ -224,7 +224,9 @@ export function VoyagePanel({
       voyage.mode === "free" && Math.abs(after - before) > 0.01;
 
     if (!shouldAnimate) {
-      setDisplayProgress(after);
+      if (Math.abs(after - displayProgress) > 0.01) {
+        setDisplayProgress(after);
+      }
       return;
     }
 
