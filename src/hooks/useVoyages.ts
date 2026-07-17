@@ -72,7 +72,10 @@ export function useVoyages() {
   }, []);
 
   const createVoyage = async (input: CreateVoyageInput) => {
-    if (!uid) return;
+    if (!uid) {
+      showToast("ログイン状態を確認できませんでした。もう一度お試しください", "error");
+      throw new Error("createVoyage: not authenticated");
+    }
     const voyagesRef = collection(db, "users", uid, "voyages");
     const id = genId();
 
@@ -114,6 +117,8 @@ export function useVoyages() {
       showToast("航路の作成に失敗しました。もう一度お試しください", "error");
       throw error;
     }
+
+    return id;
   };
 
   const updateVoyage = async (voyageId: string, data: Partial<Voyage>) => {
