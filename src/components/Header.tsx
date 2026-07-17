@@ -88,6 +88,13 @@ export default function Header() {
   return (
     <header>
       <div className="title-block">
+        <img
+          src="/header-logo.png"
+          alt=""
+          width={40}
+          height={40}
+          style={{ alignSelf: "center" }}
+        />
         <h1>作業の航海日誌</h1>
         <span className="subtitle">{"voyage-log"}</span>
       </div>
