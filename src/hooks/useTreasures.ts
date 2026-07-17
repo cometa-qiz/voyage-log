@@ -1,6 +1,13 @@
 import { useEffect, useState } from "react";
 import { onAuthStateChanged } from "firebase/auth";
-import { collection, doc, onSnapshot, setDoc } from "firebase/firestore";
+import {
+  collection,
+  doc,
+  getDocs,
+  onSnapshot,
+  setDoc,
+  writeBatch,
+} from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import type { Treasure } from "@/lib/types";
 
@@ -71,5 +78,21 @@ export function useTreasures() {
     return treasure;
   };
 
-  return { treasures, loading, grantTreasure };
+  // docs/constraints.mdの「例外: データクリア機能」に基づく、
+  // ユーザー自身が明示的に実行するテストデータ一掃機能。
+  // Firestoreの500件バッチ上限を考慮し450件ずつ分割して削除する。
+  const clearTreasures = async () => {
+    if (!uid) return;
+    const treasuresRef = collection(db, "users", uid, "treasures");
+    const snap = await getDocs(treasuresRef);
+    const docs = snap.docs;
+    for (let i = 0; i < docs.length; i += 450) {
+      const batch = writeBatch(db);
+      docs.slice(i, i + 450).forEach((docSnap) => batch.delete(docSnap.ref));
+      await batch.commit();
+    }
+    return docs.length;
+  };
+
+  return { treasures, loading, grantTreasure, clearTreasures };
 }
