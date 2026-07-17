@@ -89,7 +89,7 @@ export default function Header() {
     <header>
       <div className="title-block">
         <h1>作業の航海日誌</h1>
-        <span className="subtitle">{"SHIP'S LOG — CHART No.1"}</span>
+        <span className="subtitle">{"voyage-log"}</span>
       </div>
       <div className="header-actions">
         <button type="button" onClick={toggleMute} className="btn-ghost">
