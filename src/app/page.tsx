@@ -75,8 +75,9 @@ function buildAnchorUpdate(voyage: Voyage) {
 }
 
 export default function Home() {
-  const { voyages, createVoyage, updateVoyage, discardVoyage } = useVoyages();
-  const { treasures, grantTreasure } = useTreasures();
+  const { voyages, createVoyage, updateVoyage, discardVoyage, clearVoyages } =
+    useVoyages();
+  const { treasures, grantTreasure, clearTreasures } = useTreasures();
   const sound = useSoundContext();
   const { showToast } = useToastContext();
   const [activeId, setActiveId] = useActiveId();
@@ -84,6 +85,9 @@ export default function Home() {
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const [clearConfirmType, setClearConfirmType] = useState<
+    "treasures" | "all" | null
+  >(null);
   const [arrivedVoyage, setArrivedVoyage] = useState<{
     id: string;
     name: string;
@@ -404,6 +408,27 @@ export default function Home() {
     setArrivedVoyage(null);
   };
 
+  const handleClearData = async () => {
+    if (!clearConfirmType) return;
+    try {
+      if (clearConfirmType === "all") {
+        const voyageCount = await clearVoyages();
+        const treasureCount = await clearTreasures();
+        showToast(
+          `全データを消去しました（航路${voyageCount ?? 0}件・宝${treasureCount ?? 0}件）`,
+          "success",
+        );
+      } else {
+        const treasureCount = await clearTreasures();
+        showToast(`宝を消去しました（${treasureCount ?? 0}件）`, "success");
+      }
+    } catch {
+      showToast("データの消去に失敗しました", "error");
+    } finally {
+      setClearConfirmType(null);
+    }
+  };
+
   // createVoyage()内`state.activeId=v.id;state.view='chart';`
   // （1527〜1528行目）を移植。新規航路作成後、自動でそのタブへ切り替える。
   const handleCreateVoyage = async (input: CreateVoyageInput) => {
@@ -436,7 +461,11 @@ export default function Home() {
 
       <main className="mx-auto flex w-full max-w-[1060px] flex-1 flex-col gap-4 p-4">
         {view === "collection" ? (
-          <TreasureCollection treasures={treasures} />
+          <TreasureCollection
+            treasures={treasures}
+            onClearTreasures={() => setClearConfirmType("treasures")}
+            onClearAll={() => setClearConfirmType("all")}
+          />
         ) : activeVoyage ? (
           <VoyagePanel
             key={activeVoyage.id}
@@ -569,6 +598,19 @@ export default function Home() {
             await discardVoyage(activeVoyage.id);
             setIsDiscardConfirmOpen(false);
           }}
+        />
+      )}
+
+      {clearConfirmType && (
+        <ConfirmDialog
+          message={
+            clearConfirmType === "all"
+              ? "宝と航路のすべてのデータを消去します。この操作は取り消せません。よろしいですか？"
+              : "宝のデータをすべて消去します。この操作は取り消せません。よろしいですか？"
+          }
+          confirmLabel="消去する"
+          onConfirm={handleClearData}
+          onCancel={() => setClearConfirmType(null)}
         />
       )}
     </div>

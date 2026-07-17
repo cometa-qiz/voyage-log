@@ -3,7 +3,15 @@ import type { Treasure } from "@/lib/types";
 const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
 
 // 宝物庫タブ。docs/voyage-log.html の renderCollection()（1195〜1219行目）を移植。
-export function TreasureCollection({ treasures }: { treasures: Treasure[] }) {
+export function TreasureCollection({
+  treasures,
+  onClearTreasures,
+  onClearAll,
+}: {
+  treasures: Treasure[];
+  onClearTreasures: () => void;
+  onClearAll: () => void;
+}) {
   const counts: Record<string, number> = {};
   for (const treasure of treasures) {
     counts[treasure.letter] = (counts[treasure.letter] ?? 0) + 1;
@@ -45,6 +53,22 @@ export function TreasureCollection({ treasures }: { treasures: Treasure[] }) {
       <div className="empty" style={{ marginTop: "14px" }}>
         宝の入手方法：工程を3つ達成するごとに1個 ／
         航海を完了（入港）するごとに1個。全26種、同じ確率で出ます。
+      </div>
+
+      <div
+        style={{
+          marginTop: "14px",
+          display: "flex",
+          gap: "8px",
+          justifyContent: "flex-end",
+        }}
+      >
+        <button type="button" onClick={onClearTreasures} className="btn-cancel">
+          宝のみ消去
+        </button>
+        <button type="button" onClick={onClearAll} className="btn-danger">
+          全データ消去
+        </button>
       </div>
     </>
   );
