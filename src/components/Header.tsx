@@ -14,7 +14,7 @@ import {
 
 export default function Header() {
   const [user, setUser] = useState<User | null>(null);
-  const { muted, toggleMute } = useSoundContext();
+  const { muted, toggleMute, volume, setVolume } = useSoundContext();
   const { showToast } = useToastContext();
   const [isExporting, setIsExporting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
@@ -95,6 +95,16 @@ export default function Header() {
         <button type="button" onClick={toggleMute} className="btn-ghost">
           {muted ? "🔇 消音" : "🔊 音"}
         </button>
+        <input
+          type="range"
+          min={0}
+          max={100}
+          value={volume}
+          onChange={(e) => setVolume(Number(e.target.value))}
+          disabled={muted}
+          style={{ width: "70px", verticalAlign: "middle" }}
+          title="音量"
+        />
         <button
           type="button"
           onClick={handleExport}
