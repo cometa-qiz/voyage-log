@@ -42,6 +42,10 @@ export function useDockOpen() {
   return useLocalStorageState<boolean>("voyage-log-dockOpen", true);
 }
 
+export function useVolume() {
+  return useLocalStorageState<number>("voyage-log-volume", 80);
+}
+
 export function useTodStart() {
   return useLocalStorageState<number>("voyage-log-todStart", Date.now());
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef } from "react";
-import { useMuted } from "./useLocalSettings";
+import { useMuted, useVolume } from "./useLocalSettings";
 
 // docs/voyage-log.html 775〜823行目のac()/tone()/bell()/SEオブジェクト/toggleMute()を移植。
 // pomoBreak/pomoWorkはv1スコープ外（constraints.md #18・requirements.md 2章）のため実装しない。
@@ -18,6 +18,7 @@ interface WindowWithWebkitAudio extends Window {
 // 呼び出し元ごとに独立してしまい、ミュート操作が他コンポーネントに反映されない）。
 export function useSoundImpl() {
   const [muted, setMuted] = useMuted();
+  const [volume, setVolume] = useVolume();
   const audioCtxRef = useRef<AudioContext | null>(null);
 
   // ac()（777〜781行目）を移植。AudioContextはtone()の初回呼び出し
@@ -54,7 +55,7 @@ export function useSoundImpl() {
         o.frequency.setValueAtTime(freq, t);
         if (slideTo) o.frequency.exponentialRampToValueAtTime(slideTo, t + dur);
         g.gain.setValueAtTime(0, t);
-        g.gain.linearRampToValueAtTime(vol, t + 0.02);
+        g.gain.linearRampToValueAtTime(vol * (volume / 100), t + 0.02);
         g.gain.exponentialRampToValueAtTime(0.001, t + dur);
         o.connect(g);
         g.connect(c.destination);
@@ -64,7 +65,7 @@ export function useSoundImpl() {
         // プロトタイプの`catch(e){}`（794行目）を踏襲。AudioContext未対応環境等では無音のまま握りつぶす。
       }
     },
-    [muted, ac],
+    [muted, ac, volume],
   );
 
   // bell()（796〜800行目）を移植。
@@ -138,6 +139,8 @@ export function useSoundImpl() {
   return {
     muted,
     toggleMute,
+    volume,
+    setVolume,
     depart,
     anchor,
     write,
