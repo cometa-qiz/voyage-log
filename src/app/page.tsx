@@ -3,7 +3,12 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useVoyages, type CreateVoyageInput } from "@/hooks/useVoyages";
 import { pickRandomLetter, useTreasures } from "@/hooks/useTreasures";
-import { useActiveId, useView } from "@/hooks/useLocalSettings";
+import {
+  useActiveId,
+  useView,
+  usePomoWorkMinutes,
+  usePomoBreakMinutes,
+} from "@/hooks/useLocalSettings";
 import { useSoundContext } from "@/components/SoundProvider";
 import { useToastContext } from "@/components/ToastProvider";
 import { TabBar } from "@/components/TabBar";
@@ -16,7 +21,7 @@ import { LogViewModal } from "@/components/LogViewModal";
 import { TodoDock } from "@/components/TodoDock";
 import { TreasureModal } from "@/components/TreasureModal";
 import { TreasureCollection } from "@/components/TreasureCollection";
-import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
+import { elapsedMs, fmtDate, fmtDur, progressOf, sessBreak } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
 // プロトタイプのuid()と同じ生成方式（Date.now()のbase36＋乱数）
@@ -48,9 +53,17 @@ function generateConfetti(): ConfettiPiece[] {
 // toggleSail()の停泊分岐と、100%到達時の自動停泊（arrive前段）の両方から使う共通処理。
 function buildAnchorUpdate(voyage: Voyage) {
   const now = Date.now();
-  const dur = Math.max(0, now - (voyage.sailStart ?? now));
+  const rawDur = Math.max(0, now - (voyage.sailStart ?? now));
+  const dur = Math.max(0, rawDur - sessBreak(voyage));
   const accumMs = voyage.accumMs + dur;
-  const updatedVoyage = { ...voyage, accumMs, sailing: false, sailStart: null };
+  const updatedVoyage = {
+    ...voyage,
+    accumMs,
+    sailing: false,
+    sailStart: null,
+    pomo: null,
+    sessBreakMs: 0,
+  };
   return {
     accumMs,
     payload: {
@@ -61,6 +74,8 @@ function buildAnchorUpdate(voyage: Voyage) {
       ],
       sailing: false,
       sailStart: null,
+      pomo: null,
+      sessBreakMs: 0,
       logs: [
         ...voyage.logs,
         {
@@ -83,6 +98,8 @@ export default function Home() {
   const { showToast } = useToastContext();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
+  const [pomoWorkMinutes] = usePomoWorkMinutes();
+  const [pomoBreakMinutes] = usePomoBreakMinutes();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
@@ -174,6 +191,62 @@ export default function Home() {
         sailStart: Date.now(),
       });
     }
+  };
+
+  // togglePomo()（1366〜1379行目）を移植。
+  const handleTogglePomo = () => {
+    const v = activeVoyage;
+    if (!v || !v.sailing) return;
+    if (v.pomo) {
+      const additionalBreak =
+        v.pomo.phase === "break" ? Date.now() - v.pomo.phaseStart : 0;
+      updateVoyage(v.id, {
+        pomo: null,
+        sessBreakMs: v.sessBreakMs + additionalBreak,
+      });
+      sound.write();
+    } else {
+      updateVoyage(v.id, { pomo: { phase: "work", phaseStart: Date.now() } });
+      sound.pomoWork();
+    }
+  };
+
+  // tickPomo()（1380〜1398行目）を移植。表示中の航路のみを対象とする
+  // （requirements.md 9章）ため、VoyagePanelの毎秒tickから呼ばれる。
+  // 離席等でまとめて複数フェーズ分経過した場合も追いつくが、効果音は
+  // 最終フェーズの分のみ1回鳴らす（追いついた回数分連打しない）。
+  const handlePomoTick = () => {
+    const v = activeVoyage;
+    if (!v || !v.pomo || !v.sailing) return;
+    const workMs = pomoWorkMinutes * 60000;
+    const breakMs = pomoBreakMinutes * 60000;
+
+    let phase = v.pomo.phase;
+    let phaseStart = v.pomo.phaseStart;
+    let sessBreakMsAdd = 0;
+    let transitioned = false;
+    let guard = 0;
+    while (guard++ < 300) {
+      const dur = phase === "work" ? workMs : breakMs;
+      if (Date.now() - phaseStart < dur) break;
+      if (phase === "work") {
+        phase = "break";
+      } else {
+        sessBreakMsAdd += breakMs;
+        phase = "work";
+      }
+      phaseStart += dur;
+      transitioned = true;
+    }
+    if (!transitioned) return;
+
+    if (phase === "break") sound.pomoBreak();
+    else sound.pomoWork();
+
+    updateVoyage(v.id, {
+      pomo: { phase, phaseStart },
+      sessBreakMs: v.sessBreakMs + sessBreakMsAdd,
+    });
   };
 
   // addNote()を移植。posは送信時点の最新progressOf(activeVoyage)で計算する
@@ -480,6 +553,7 @@ export default function Home() {
             onDeleteLog={handleDeleteLog}
             onArrive={handleArrive}
             onCheer={handleCheer}
+            onPomoTick={handlePomoTick}
           />
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
