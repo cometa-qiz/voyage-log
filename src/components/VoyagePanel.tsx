@@ -57,6 +57,7 @@ export function VoyagePanel({
   onDeleteLog,
   onArrive,
   onCheer,
+  onPomoTick,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
@@ -65,13 +66,17 @@ export function VoyagePanel({
   onDeleteLog: (logId: string) => Promise<void>;
   onArrive: (fullSpeed: boolean) => void;
   onCheer: (island: string) => void;
+  onPomoTick?: () => void;
 }) {
   const { cheer, fullspeed } = useSoundContext();
   const [, setTick] = useState(0);
 
   useEffect(() => {
     if (!voyage.sailing) return;
-    const timer = setInterval(() => setTick((t) => t + 1), 1000);
+    const timer = setInterval(() => {
+      setTick((t) => t + 1);
+      onPomoTickRef.current?.();
+    }, 1000);
     return () => clearInterval(timer);
   }, [voyage.id, voyage.sailing]);
 
@@ -87,6 +92,13 @@ export function VoyagePanel({
   const onArriveRef = useRef(onArrive);
   useEffect(() => {
     onArriveRef.current = onArrive;
+  });
+
+  // onArriveRefと同じ理由（呼び出し側で毎レンダー新しい関数になり得るため）で
+  // onPomoTickもrefで保持し、上記の毎秒tick effectの依存配列から外す。
+  const onPomoTickRef = useRef(onPomoTick);
+  useEffect(() => {
+    onPomoTickRef.current = onPomoTick;
   });
 
   // onArriveRefと同じ理由（呼び出し側で毎レンダー新しい関数になり得るため）で
