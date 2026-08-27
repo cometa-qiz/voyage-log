@@ -58,6 +58,7 @@ export function VoyagePanel({
   onArrive,
   onCheer,
   onPomoTick,
+  onTogglePomo,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
@@ -67,6 +68,7 @@ export function VoyagePanel({
   onArrive: (fullSpeed: boolean) => void;
   onCheer: (island: string) => void;
   onPomoTick?: () => void;
+  onTogglePomo?: () => void;
 }) {
   const { cheer, fullspeed } = useSoundContext();
   const [, setTick] = useState(0);
@@ -401,6 +403,17 @@ export function VoyagePanel({
         <button type="button" onClick={onOpenNote} className="btn-note">
           ✎ 記帳する
         </button>
+        {voyage.sailing && (
+          <>
+            <button
+              type="button"
+              onClick={onTogglePomo}
+              className={`btn-pomo${voyage.pomo ? " on" : ""}`}
+            >
+              ⏱️ {voyage.pomo ? "ポモドーロ中" : "ポモドーロ"}
+            </button>
+          </>
+        )}
         <button type="button" onClick={onDiscard} className="btn-secondary">
           破棄
         </button>
