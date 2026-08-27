@@ -16,7 +16,7 @@ import { LogViewModal } from "@/components/LogViewModal";
 import { TodoDock } from "@/components/TodoDock";
 import { TreasureModal } from "@/components/TreasureModal";
 import { TreasureCollection } from "@/components/TreasureCollection";
-import { elapsedMs, fmtDate, fmtDur, progressOf } from "@/lib/progress";
+import { elapsedMs, fmtDate, fmtDur, progressOf, sessBreak } from "@/lib/progress";
 import type { Voyage } from "@/lib/types";
 
 // プロトタイプのuid()と同じ生成方式（Date.now()のbase36＋乱数）
@@ -48,9 +48,17 @@ function generateConfetti(): ConfettiPiece[] {
 // toggleSail()の停泊分岐と、100%到達時の自動停泊（arrive前段）の両方から使う共通処理。
 function buildAnchorUpdate(voyage: Voyage) {
   const now = Date.now();
-  const dur = Math.max(0, now - (voyage.sailStart ?? now));
+  const rawDur = Math.max(0, now - (voyage.sailStart ?? now));
+  const dur = Math.max(0, rawDur - sessBreak(voyage));
   const accumMs = voyage.accumMs + dur;
-  const updatedVoyage = { ...voyage, accumMs, sailing: false, sailStart: null };
+  const updatedVoyage = {
+    ...voyage,
+    accumMs,
+    sailing: false,
+    sailStart: null,
+    pomo: null,
+    sessBreakMs: 0,
+  };
   return {
     accumMs,
     payload: {
@@ -61,6 +69,8 @@ function buildAnchorUpdate(voyage: Voyage) {
       ],
       sailing: false,
       sailStart: null,
+      pomo: null,
+      sessBreakMs: 0,
       logs: [
         ...voyage.logs,
         {
