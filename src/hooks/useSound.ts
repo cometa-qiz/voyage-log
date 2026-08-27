@@ -4,7 +4,7 @@ import { useCallback, useRef } from "react";
 import { useMuted, useVolume } from "./useLocalSettings";
 
 // docs/voyage-log.html 775〜823行目のac()/tone()/bell()/SEオブジェクト/toggleMute()を移植。
-// pomoBreak/pomoWorkはv1スコープ外（constraints.md #18・requirements.md 2章）のため実装しない。
+// pomoWork/pomoBreakを含む（v1.5、docs/requirements.md 9章参照）。
 
 type OscillatorTypeName = "sine" | "sawtooth" | "triangle" | "square";
 
@@ -78,7 +78,7 @@ export function useSoundImpl() {
     [tone],
   );
 
-  // SEオブジェクト（801〜818行目）を移植。pomoBreak/pomoWorkはv1スコープ外のため除外。
+  // SEオブジェクト（801〜818行目）を移植。
   const depart = useCallback(() => {
     tone(146, 1.3, "sawtooth", 0.1, 0, 138);
     tone(148, 1.3, "triangle", 0.1, 0, 140);
@@ -130,6 +130,16 @@ export function useSoundImpl() {
     tone(392, 1.4, "sine", 0.08, 1.2);
   }, [bell, tone]);
 
+  // docs/voyage-log.html 809〜810行目のSE.pomoWork/SE.pomoBreakを移植。
+  const pomoWork = useCallback(() => {
+    tone(180, 0.5, "sawtooth", 0.09, 0, 170);
+    tone(90, 0.5, "sine", 0.07);
+  }, [tone]);
+
+  const pomoBreak = useCallback(() => {
+    bell(0, 0.14);
+  }, [bell]);
+
   // toggleMute()（819〜823行目）を移植。muted状態はuseLocalSettingsのuseMuted()経由で
   // localStorageに永続化される（プロトタイプのsave()に相当）。
   const toggleMute = useCallback(() => {
@@ -150,5 +160,7 @@ export function useSoundImpl() {
     fullspeed,
     treasure,
     arrive,
+    pomoWork,
+    pomoBreak,
   };
 }

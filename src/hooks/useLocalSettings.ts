@@ -46,6 +46,14 @@ export function useVolume() {
   return useLocalStorageState<number>("voyage-log-volume", 80);
 }
 
+export function usePomoWorkMinutes() {
+  return useLocalStorageState<number>("voyage-log-pomoWorkMinutes", 25);
+}
+
+export function usePomoBreakMinutes() {
+  return useLocalStorageState<number>("voyage-log-pomoBreakMinutes", 5);
+}
+
 export function useTodStart() {
   return useLocalStorageState<number>("voyage-log-todStart", Date.now());
 }
