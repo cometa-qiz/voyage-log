@@ -26,6 +26,11 @@ export interface Treasure {
   source: "todo" | "goal";
 }
 
+export interface PomoState {
+  phase: "work" | "break";
+  phaseStart: number;
+}
+
 export interface Voyage {
   id: string;
   name: string;
@@ -44,8 +49,8 @@ export interface Voyage {
   todoRewards: number;
   // 【v1.5予約】現セッションの休憩累計。v1では常に0
   sessBreakMs: number;
-  // 【v1.5予約】ポモドーロ状態。v1では常にnull
-  pomo: null;
+  // ポモドーロの現在の状態。null=非稼働中
+  pomo: PomoState | null;
   archived: boolean;
   archivedAt: number | null;
   // 論理削除フラグ（Firestore用）。falseの航路は一覧・集計・書き出しの対象外とする

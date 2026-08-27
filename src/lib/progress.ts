@@ -1,8 +1,22 @@
 import type { Voyage } from "./types";
 
+// docs/voyage-log.html sessBreak()（883〜887行目）を移植。
+// 現セッションの累積休憩時間（sessBreakMs）に、現在進行中の休憩フェーズの
+// 経過分（あれば）を加算する。
+export function sessBreak(voyage: Voyage): number {
+  let b = voyage.sessBreakMs || 0;
+  if (voyage.sailing && voyage.pomo && voyage.pomo.phase === "break") {
+    b += Date.now() - voyage.pomo.phaseStart;
+  }
+  return b;
+}
+
 export function elapsedMs(voyage: Voyage): number {
   if (voyage.sailing && voyage.sailStart !== null) {
-    return voyage.accumMs + (Date.now() - voyage.sailStart);
+    return (
+      voyage.accumMs +
+      Math.max(0, Date.now() - voyage.sailStart - sessBreak(voyage))
+    );
   }
   return voyage.accumMs;
 }
