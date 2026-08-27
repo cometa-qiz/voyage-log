@@ -58,6 +58,10 @@ export function VoyagePanel({
   onArrive,
   onCheer,
   onPomoTick,
+  onTogglePomo,
+  pomoWorkMinutes,
+  pomoBreakMinutes,
+  onOpenPomoSettings,
 }: {
   voyage: Voyage;
   onToggleSail: () => void;
@@ -67,6 +71,10 @@ export function VoyagePanel({
   onArrive: (fullSpeed: boolean) => void;
   onCheer: (island: string) => void;
   onPomoTick?: () => void;
+  onTogglePomo?: () => void;
+  pomoWorkMinutes?: number;
+  pomoBreakMinutes?: number;
+  onOpenPomoSettings?: () => void;
 }) {
   const { cheer, fullspeed } = useSoundContext();
   const [, setTick] = useState(0);
@@ -389,6 +397,23 @@ export function VoyagePanel({
           {fmtClock(sailingClockMs(voyage))}
         </div>
       )}
+      {voyage.sailing && voyage.pomo && (
+        (() => {
+          const workMs = (pomoWorkMinutes ?? 25) * 60000;
+          const breakMs = (pomoBreakMinutes ?? 5) * 60000;
+          const dur = voyage.pomo.phase === "work" ? workMs : breakMs;
+          const left = Math.max(0, dur - (Date.now() - voyage.pomo.phaseStart));
+          const s = Math.floor(left / 1000);
+          const mmss = `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
+          return (
+            <div className={`pomo-clock text-sm ${voyage.pomo.phase}`}>
+              {voyage.pomo.phase === "work"
+                ? `作業 ${mmss}`
+                : `☕ 休憩 ${mmss}（船は漂泊中）`}
+            </div>
+          );
+        })()
+      )}
 
       <div className="log-row">
         <button
@@ -401,6 +426,25 @@ export function VoyagePanel({
         <button type="button" onClick={onOpenNote} className="btn-note">
           ✎ 記帳する
         </button>
+        {voyage.sailing && (
+          <>
+            <button
+              type="button"
+              onClick={onTogglePomo}
+              className={`btn-pomo${voyage.pomo ? " on" : ""}`}
+            >
+              ⏱️ {voyage.pomo ? "ポモドーロ中" : "ポモドーロ"}
+            </button>
+            <button
+              type="button"
+              onClick={onOpenPomoSettings}
+              className="btn-pomo-settings"
+              title="ポモドーロ設定"
+            >
+              ⚙
+            </button>
+          </>
+        )}
         <button type="button" onClick={onDiscard} className="btn-secondary">
           破棄
         </button>

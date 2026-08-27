@@ -873,6 +873,53 @@ header h1 {
   border-color: var(--danger);
   color: #e2a090;
 }
+.btn-pomo {
+  flex: 1;
+  min-width: 120px;
+  background: var(--navy-light);
+  border: 1px solid rgba(201, 168, 92, 0.4);
+  color: var(--gold);
+  border-radius: var(--radius);
+  padding: 14px 14px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: 0.2s;
+  font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+  letter-spacing: 0.08em;
+}
+.btn-pomo:hover {
+  border-color: var(--gold);
+  background: rgba(201, 168, 92, 0.1);
+}
+.btn-pomo.on {
+  background: linear-gradient(160deg, #7e2b2b, #b34a4a);
+  color: #ffe8e8;
+  border-color: #c96b6b;
+}
+.btn-pomo-settings {
+  flex: 0 0 auto;
+  min-width: auto;
+  padding: 14px 12px;
+  background: var(--navy-light);
+  border: 1px solid rgba(155, 168, 176, 0.3);
+  color: var(--text-dim);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: 0.2s;
+}
+.btn-pomo-settings:hover {
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.pomo-clock {
+  font-family: Consolas, monospace;
+}
+.pomo-clock.work {
+  color: #f2b8b8;
+}
+.pomo-clock.break {
+  color: #b8ddf2;
+}
 
 /* ---------- Notebook（工程手帳）（docs/voyage-log.html .notebook-btn〜.nb-bg.open・280〜362行目を移植） ---------- */
 .notebook-btn {

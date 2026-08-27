@@ -18,6 +18,7 @@ import { NoteModal } from "@/components/NoteModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { Notebook } from "@/components/Notebook";
 import { LogViewModal } from "@/components/LogViewModal";
+import { PomoSettingsModal } from "@/components/PomoSettingsModal";
 import { TodoDock } from "@/components/TodoDock";
 import { TreasureModal } from "@/components/TreasureModal";
 import { TreasureCollection } from "@/components/TreasureCollection";
@@ -98,11 +99,12 @@ export default function Home() {
   const { showToast } = useToastContext();
   const [activeId, setActiveId] = useActiveId();
   const [view, setView] = useView();
-  const [pomoWorkMinutes] = usePomoWorkMinutes();
-  const [pomoBreakMinutes] = usePomoBreakMinutes();
+  const [pomoWorkMinutes, setPomoWorkMinutes] = usePomoWorkMinutes();
+  const [pomoBreakMinutes, setPomoBreakMinutes] = usePomoBreakMinutes();
   const [isNewVoyageModalOpen, setIsNewVoyageModalOpen] = useState(false);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
   const [isDiscardConfirmOpen, setIsDiscardConfirmOpen] = useState(false);
+  const [isPomoSettingsOpen, setIsPomoSettingsOpen] = useState(false);
   const [clearConfirmType, setClearConfirmType] = useState<
     "treasures" | "all" | null
   >(null);
@@ -554,6 +556,10 @@ export default function Home() {
             onArrive={handleArrive}
             onCheer={handleCheer}
             onPomoTick={handlePomoTick}
+            onTogglePomo={handleTogglePomo}
+            pomoWorkMinutes={pomoWorkMinutes}
+            pomoBreakMinutes={pomoBreakMinutes}
+            onOpenPomoSettings={() => setIsPomoSettingsOpen(true)}
           />
         ) : (
           <p className="text-sm text-zinc-500 dark:text-zinc-400">
@@ -632,6 +638,18 @@ export default function Home() {
             />
           );
         })()}
+
+      {isPomoSettingsOpen && (
+        <PomoSettingsModal
+          workMinutes={pomoWorkMinutes}
+          breakMinutes={pomoBreakMinutes}
+          onSave={(work, brk) => {
+            setPomoWorkMinutes(work);
+            setPomoBreakMinutes(brk);
+          }}
+          onClose={() => setIsPomoSettingsOpen(false)}
+        />
+      )}
 
       {arrivedVoyage && (
         <div className="arrival">
